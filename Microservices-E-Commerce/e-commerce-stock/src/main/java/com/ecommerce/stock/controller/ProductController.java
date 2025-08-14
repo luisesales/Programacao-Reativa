@@ -1,4 +1,4 @@
-package com.ecommerce.stock.controllers;
+package com.ecommerce.stock.controller;
 
 import java.util.List;
 import java.util.Optional;
@@ -72,7 +72,7 @@ public class ProductController {
                         logger.warn("Product with id {} not found for deletion.", id);
                         return ResponseEntity.notFound().build();
                     }                    
-                })
+                });
                 
     }
 
