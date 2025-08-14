@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -63,18 +62,12 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         logger.info("Deleting product with id: {}", id);
-        return productService.getProductById(id)
-                .map(product -> {
-                    if(productService.deleteProduct(product)) {
-                        logger.info("Product with id {} deleted successfully.", id);
-                        return ResponseEntity.ok("Product deleted successfully.");
-                    } else {
-                        logger.warn("Product with id {} not found for deletion.", id);
-                        return ResponseEntity.notFound().build();
-                    }                    
-                });
-                
+        if(productService.deleteProduct(id)) {
+            logger.info("Product with id {} deleted successfully.", id);
+            return ResponseEntity.ok("Product deleted successfully.");
+        } else {
+            logger.warn("Product with id {} not found for deletion.", id);
+            return ResponseEntity.notFound().build();                            
+        }
     }
-
-
 }

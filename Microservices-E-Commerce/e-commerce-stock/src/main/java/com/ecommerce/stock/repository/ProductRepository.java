@@ -1,14 +1,13 @@
 package com.ecommerce.stock.repository;
 
-    import com.bankai.mcpserver.model.Product;
-    import com.ecommerce.stock.model.Product;
-    
-    import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import java.util.Optional;
 
-    import java.util.Optional;
-    import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ProductRepository {
+import com.ecommerce.stock.model.Product;
+
+public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByName(String name);
     Optional<Product> findById(Long id);
     List<Product> findByCategory(String category);
