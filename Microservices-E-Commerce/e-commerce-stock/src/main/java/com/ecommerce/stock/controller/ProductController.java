@@ -27,9 +27,9 @@ public class ProductController {
     private ProductService productService;
 
     @GetMapping
-    public List<Product> getAllProducts() {
+    public ResponseEntity<List<Product>> getAllProducts() {
         logger.info("Request received to get all products.");    
-        return productService.getAllProducts();
+        return ResponseEntity.ok(productService.getAllProducts());
     }
 
     @GetMapping("/{id}")
@@ -70,4 +70,7 @@ public class ProductController {
             return ResponseEntity.notFound().build();                            
         }
     }
+
+    @PostMapping("/order")
+    public ResponseEntity<String> orderProduct(@RequestBody orders)
 }
