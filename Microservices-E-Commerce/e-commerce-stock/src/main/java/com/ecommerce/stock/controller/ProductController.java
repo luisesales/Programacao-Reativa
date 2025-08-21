@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.ecommerce.order.model.Order;
+import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.service.ProductService;
 
@@ -73,10 +73,13 @@ public class ProductController {
     }
 
     @PostMapping("/order")
-    public ResponseEntity<String> orderProduct(@RequestBody order){
-        Order order = (Order) order;
+    public ResponseEntity<String> orderProduct(@RequestBody Order order){
         logger.info("Request received to order products :{}", order.getName() + " with price: " + order.getTotalPrice());
-        String response;
-        for()
+        if(order == null || order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
+            logger.warn("Order request is empty or invalid.");
+            return ResponseEntity.badRequest().body("Invalid order request.");
+        }       
+        logger.info("Order processed successfully for products: {}", order.getProductsQuantity());        
+        return ResponseEntity.ok(productService.buyProducts(order));        
     }
 }

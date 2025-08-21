@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+@Entity
 public class OrderResult{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +14,7 @@ public class OrderResult{
     private boolean success;
     private Product product;
 
-    public setResponse(String response) {
+    public void setResponse(String response) {
         this.response = response;
     }
     public String getResponse() {
