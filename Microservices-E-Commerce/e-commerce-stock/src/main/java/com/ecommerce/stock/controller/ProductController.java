@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.ecommerce.order.model.Order;
 import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.service.ProductService;
 
@@ -61,7 +62,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
-        logger.info("Deleting product with id: {}", id);
+        logger.info("Request recieved to delete product with id: {}", id);
         if(productService.deleteProduct(id)) {
             logger.info("Product with id {} deleted successfully.", id);
             return ResponseEntity.ok("Product deleted successfully.");
@@ -72,5 +73,10 @@ public class ProductController {
     }
 
     @PostMapping("/order")
-    public ResponseEntity<String> orderProduct(@RequestBody orders)
+    public ResponseEntity<String> orderProduct(@RequestBody order){
+        Order order = (Order) order;
+        logger.info("Request received to order products :{}", order.getName() + " with price: " + order.getTotalPrice());
+        String response;
+        for()
+    }
 }

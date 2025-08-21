@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.repository.ProductRepository;
 
@@ -93,6 +94,9 @@ public class ProductService {
                     return false;
                 });
     }
+
+    public List<OrderResult> buyProducts()
+
 
     public boolean increaseStock(Long id, int quantity) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
