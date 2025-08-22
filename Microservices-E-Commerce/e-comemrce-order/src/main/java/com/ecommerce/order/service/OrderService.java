@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.repository.OrderRepository;
 
+import com.ecommerce.order.exchange.ProductHttpInterface;
+
 @Service
 public class OrderService {
 
@@ -19,6 +21,9 @@ public class OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private ProductHttpInterface productHttpInterface;
 
     public List<Order> getAllOrders() {
         logger.info("Fetching all orders");
@@ -30,10 +35,22 @@ public class OrderService {
         
     }
 
-    public Order createOrder(Order order) {
-        logger.info("Creating new order: {}", order.getName());
-        return orderRepository.save(order);
+    public String createOrder(Order order) {
+        logger.info("Creating new order: {}", order.getId());
+        try {
+            Order savedOrder = orderRepository.save(order);
+            logger.info("Order created successfully with id: {}", savedOrder.getId());
+            return productHttpInterface.orderProduct(savedOrder).getBody();
+        } catch (Exception e) {
+            logger.error("Error creating order: {}", e.getMessage());
+            return "Error creating order: " + e.getMessage();
+        }
     }
+
+    // public Order createOrder(Order order) {
+    //     logger.info("Creating new order: {}", order.getName());
+    //     return orderRepository.save(order);
+    // }
     
     public Order updateOrder(Long id, Order orderDetails) {
         logger.info("Updating order with id: {}", id);
