@@ -1,4 +1,4 @@
-package com.bankai.mcp.client.model;
+package com.ecommerce.mcp.client.model;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class BankAI{
+public class ECommerceAI{
      @Autowired
      VectorStore vectorStore;
    

@@ -1,4 +1,4 @@
-package com.bankai.mcp.client.prompt;
+package com.ecommerce.mcp.client.prompt;
 
 import java.util.List;
 

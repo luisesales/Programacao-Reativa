@@ -1,4 +1,4 @@
-package com.bankai.mcpserver.service;
+package com.ecommerce.mcpserver.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,19 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.bankai.mcpserver.http.AccountHttpInterface;
-import com.bankai.mcpserver.http.AccountHttpInterfaceFallback;
-import com.bankai.mcpserver.model.Account;
+import com.ecommerce.mcpserver.exchange.ProductHttpInterface;
+import com.ecommerce.mcpserver.exchange.ProductHttpInterfaceFallback;
+import com.ecommerce.mcpserver.model.Product;
 
 
 
 @Service
-public class BankAIService {
+public class ECommerceAIService {
 
-    private final AccountHttpInterface accountHttpInterface;
-    private final AccountHttpInterfaceFallback fallback;
+    private final ProductHttpInterface productHttpInterface;
+    private final ProductHttpInterfaceFallback fallback;
 
-    public BankAIService(@Qualifier("produtosHttpInterface") AccountHttpInterface accountHttpInterface, AccountHttpInterfaceFallback fallback) {
+    public ECommerceAIService(@Qualifier("produtosHttpInterface") AccountHttpInterface accountHttpInterface, AccountHttpInterfaceFallback fallback) {
         this.accountHttpInterface = accountHttpInterface;
         this.fallback = fallback;
     }
@@ -95,16 +95,16 @@ public class BankAIService {
     }
 }
 
-// package com.bankai.mcpserver.service;
+// package com.ecommerce.mcpserver.service;
 
 // import java.util.List;
 // import java.util.Optional;
 
 // import org.springframework.beans.factory.annotation.Autowired;
 // import org.springframework.stereotype.Service;
-// import com.bankai.mcpserver.feign.AccountServiceInterface;
-// //import com.bankai.mcpserver.feign.AccountServiceFallback;
-// import com.bankai.mcpserver.model.Account;
+// import com.ecommerce.mcpserver.feign.AccountServiceInterface;
+// //import com.ecommerce.mcpserver.feign.AccountServiceFallback;
+// import com.ecommerce.mcpserver.model.Account;
 
 // @Service
 // public class BankAIService {
