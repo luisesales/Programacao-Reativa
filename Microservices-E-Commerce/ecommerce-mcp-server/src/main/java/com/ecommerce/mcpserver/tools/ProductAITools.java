@@ -4,15 +4,15 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
-import com.ecommerce.mcpserver.model.Account;
-import com.ecommerce.mcpserver.service.ECommerceAIService;
+import com.ecommerce.mcpserver.model.Product;
+import com.ecommerce.mcpserver.service.OrderAIService;
 
 @Component
-public class ECommerceAITools {
+public class ProductAITools {
     
-    private final ECommerceAIService ecommerceAiService;
+    private final OrderAIService ecommerceAiService;
 
-    public ECommerceAITools(ECommerceAIService ecommerceAiService) {
+    public ProductAITools(OrderAIService ecommerceAiService) {
         this.ecommerceAiService = ecommerceAiService;
     }
 
