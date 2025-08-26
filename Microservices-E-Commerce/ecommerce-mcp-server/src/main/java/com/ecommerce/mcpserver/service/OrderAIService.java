@@ -7,144 +7,49 @@ import org.springframework.stereotype.Service;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.ecommerce.mcpserver.exchange.ProductHttpInterface;
-import com.ecommerce.mcpserver.exchange.ProductHttpInterfaceFallback;
-import com.ecommerce.mcpserver.model.Product;
+import com.ecommerce.mcpserver.exchange.OrderHttpInterface;
+import com.ecommerce.mcpserver.exchange.OrderHttpInterfaceFallback;
+import com.ecommerce.mcpserver.model.Order;
 
 
 
 @Service
-public class ECommerceAIService {
+public class OrderAIService {
 
-    private final ProductHttpInterface productHttpInterface;
-    private final ProductHttpInterfaceFallback fallback;
+    private final OrderHttpInterface orderHttpInterface;
+    private final OrderHttpInterfaceFallback fallback;
 
-    public ECommerceAIService(@Qualifier("produtosHttpInterface") AccountHttpInterface accountHttpInterface, AccountHttpInterfaceFallback fallback) {
-        this.accountHttpInterface = accountHttpInterface;
+    public OrderAIService(@Qualifier("orderHttpInterface") OrderHttpInterface orderHttpInterface, OrderHttpInterfaceFallback fallback) {
+        this.orderHttpInterface = orderHttpInterface;
         this.fallback = fallback;
     }
 
-    public List<Account> getAccounts() {
+    public List<Order> getOrders() {
         try {
-            return accountHttpInterface.checkAllAccountsAvailability().getBody();
+             ResponseEntity<List<Order>> response = orderHttpInterface.getAllOrders();
+             return response.getBody();
         } catch (Exception e) {
-            return fallback.checkAllAccountsAvailability().getBody();
+            return fallback.getAllOrders().getBody();
         }
     }
 
-    public Optional<Account> getAccount(Long accountId) {
+    public Optional<Order> getOrder(Long orderId) {
         try {
-            return accountHttpInterface.checkAccountsAvailability(accountId).getBody();
+            ResponseEntity<Order> response = orderHttpInterface.getOrderById(orderId);
+            return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            return fallback.checkAccountsAvailability(accountId).getBody();
+            return fallback.getOrderById(orderId).getBody();
         }
     }
 
-    public Account updateAccount(Long accountId, Account account) {
+    public Order createOrder(Order order) {        
         try {
-            return accountHttpInterface.checkUpdateAvailability(accountId, account).getBody();
-        } catch (Exception e) {
-            return fallback.checkUpdateAvailability(accountId, account).getBody();
-        }
-    }
-
-    public Account createAccount(Account account) {
-        System.out.println("Criando conta " + account.getName() + " com id " + account.getId());
-        try {
-            return accountHttpInterface.checkCreateAvailability(account).getBody();
+            ResponseEntity<String> response = orderHttpInterface.createOrder(order);
+            return response.getBody();
         } catch (Exception e) {
             e.printStackTrace();
-            return fallback.checkCreateAvailability(account).getBody();
-        }
-    }
-
-    public String deleteAccount(Long accountId) {
-        try {
-            return accountHttpInterface.checkDeleteAvailability(accountId).getBody();
-        } catch (Exception e) {
-            return fallback.checkDeleteAvailability(accountId).getBody();
-        }
-    }
-
-    public Account depositAccount(Long accountId, double value) {
-        System.out.println("Depositando " + value + " na conta " + accountId);
-        try {
-            return accountHttpInterface.checkDepositAvailability(accountId, value).getBody();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return fallback.checkDepositAvailability(accountId, value).getBody();
-        }
-    }
-
-    public Account drawAccount(Long accountId, double value) {
-        System.out.println("Sacando " + value + " na conta " + accountId);
-        try {
-            return accountHttpInterface.checkDrawAvailability(accountId, value).getBody();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return fallback.checkDrawAvailability(accountId, value).getBody();
-        }
-    }
-
-    public double balanceAccount(Long accountId) {
-        try {
-            return accountHttpInterface.checkBalanceAvailability(accountId).getBody();
-        } catch (Exception e) {
-            return fallback.checkBalanceAvailability(accountId).getBody();
+            return fallback.createOrder(order).getBody();
         }
     }
 }
-
-// package com.ecommerce.mcpserver.service;
-
-// import java.util.List;
-// import java.util.Optional;
-
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.stereotype.Service;
-// import com.ecommerce.mcpserver.feign.AccountServiceInterface;
-// //import com.ecommerce.mcpserver.feign.AccountServiceFallback;
-// import com.ecommerce.mcpserver.model.Account;
-
-// @Service
-// public class BankAIService {
-
-//     @Autowired
-//     private AccountServiceInterface accountServiceInterface;
-    
-//     public List<Account> getAccounts() { 
-//        return accountServiceInterface.checkAllAccountsAvailability().getBody();        
-//     }
-
-//     public Optional<Account> getAccount(Long accountId){
-//         return accountServiceInterface.checkAccountsAvailability(accountId).getBody();
-//     }
-
-//     public Account updateAccount(Long accountId,Account account){
-//         return accountServiceInterface.checkUpdateAvailability(accountId,account).getBody();
-//     }
-
-//     public Account createAccount(Account account){
-//         System.out.println("Criando conta " + account.getName() + " com id " + account.getId());
-//         return accountServiceInterface.checkCreateAvailability(account).getBody();
-//     }
-
-//     public String deleteAccount(Long accountId){
-//         return accountServiceInterface.checkDeleteAvailability(accountId).getBody();
-//     }
-
-//     public Account depositAccount(Long accountId, double value){
-//         System.out.println("Depositando " + value + " na conta " + accountId);
-//         return accountServiceInterface.checkDepositAvailability(accountId,value).getBody();
-//     }
-
-//     public Account drawAccount(Long accountId, double value){
-//         System.out.println("Sacando " + value + " na conta " + accountId);
-//         return accountServiceInterface.checkDrawAvailability(accountId,value).getBody();
-//     }
-
-//     public double balanceAccount(Long accountId){
-//         return accountServiceInterface.checkBalanceAvailability(accountId).getBody();
-//     }
-// }
 
