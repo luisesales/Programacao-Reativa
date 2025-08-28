@@ -26,11 +26,7 @@ public class ProductAIService {
 
     public List<Product> getAllProducts() {
         try {
-<<<<<<< Updated upstream
             ResponseEntity<List<Product>> response = productHttpInterface.getAllProducts();
-=======
-            ResponseEntity<Product> response = productHttpInterface.getAllProducts();
->>>>>>> Stashed changes
             return response.getBody();
         } catch (Exception e) {
             return fallback.getAllProducts().getBody();
