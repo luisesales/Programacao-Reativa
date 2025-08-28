@@ -1,4 +1,4 @@
-package com.bankai.mcpserver;
+package com.ecommerce.mcpserver;
 
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
@@ -12,39 +12,64 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
-import com.bankai.mcpserver.tools.BankAITools;
-import com.bankai.mcpserver.http.AccountHttpInterface;
+import com.ecommerce.mcpserver.tools.*;
+import com.ecommerce.mcpserver.exchange.ProductHttpInterface;
+import com.ecommerce.mcpserver.exchange.OrderHttpInterface;
 
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients
-public class BankmcpserverApplication {
+public class ECommerceMCPServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BankmcpserverApplication.class, args);
+		SpringApplication.run(ECommerceMCPServerApplication.class, args);
 	}
 
 	@Bean
-	public ToolCallbackProvider aiTools(BankAITools bankAITools) {
+	public ToolCallbackProvider productAiTools(ProductAITools productAITools) {		
     return MethodToolCallbackProvider.builder()
-        .toolObjects(bankAITools)
+        .toolObjects(productAITools)
         .build();
 	}
 
 	@Bean
-	public AccountHttpInterface produtosHttpInterface(
-		@Value("http://localhost:8085/bankai-stock") String baseUrl
+	public ProductHttpInterface productHttpInterface(
+		@Value("http://localhost:8085/ecommerce-stock") String baseUrl
 	) {
-		RestClient produtosClient = RestClient.builder()
+		RestClient productsClient = RestClient.builder()
 			.baseUrl(baseUrl)
 			.build();
 
 		System.out.println(baseUrl);
 
 		HttpServiceProxyFactory factory = HttpServiceProxyFactory
-			.builderFor(RestClientAdapter.create(produtosClient))
+			.builderFor(RestClientAdapter.create(productsClient))
 			.build();
 
-		return factory.createClient(AccountHttpInterface.class);
+		return factory.createClient(ProductHttpInterface.class);
+	}
+
+	@Bean
+	public ToolCallbackProvider orderAiTools(OrderAITools orderAITools) {		
+    return MethodToolCallbackProvider.builder()
+        .toolObjects(orderAITools)
+        .build();
+	}
+
+	@Bean
+	public OrderHttpInterface orderHttpInterface(
+		@Value("http://localhost:8083/ecommerce-order") String baseUrl
+	) {
+		RestClient ordersClient = RestClient.builder()
+			.baseUrl(baseUrl)
+			.build();
+
+		System.out.println(baseUrl);
+
+		HttpServiceProxyFactory factory = HttpServiceProxyFactory
+			.builderFor(RestClientAdapter.create(ordersClient))
+			.build();
+
+		return factory.createClient(OrderHttpInterface.class);
 	}
 }
