@@ -3,14 +3,14 @@ package com.ecommerce.mcpserver.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.stereotype.Service;
-import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
-import com.ecommerce.mcpserver.http.ProductHttpInterface;
-import com.ecommerce.mcpserver.http.ProductHttpInterfaceFallback;
-import com.ecommerce.mcpserver.model.Product;
+import com.ecommerce.mcpserver.exchange.ProductHttpInterface;
+import com.ecommerce.mcpserver.exchange.ProductHttpInterfaceFallback;
 import com.ecommerce.mcpserver.model.Order;
+import com.ecommerce.mcpserver.model.Product;
 
 @Service
 public class ProductAIService {
@@ -24,12 +24,12 @@ public class ProductAIService {
         this.fallback = fallback;
     }
 
-    publcic List<Product> getAllProducts() {
+    public List<Product> getAllProducts() {
         try {
-            return productHttpInterface.getAllProducts();
+            ResponseEntity<List<Product>> response = productHttpInterface.getAllProducts();
             return response.getBody();
         } catch (Exception e) {
-            return fallback.getAllProducts();
+            return fallback.getAllProducts().getBody();
         }
     }
     public Optional<Product> getProductById(Long id) {
@@ -37,7 +37,7 @@ public class ProductAIService {
             ResponseEntity<Product> response = productHttpInterface.getProductById(id);
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            return fallback.getProductById(id);
+            return Optional.ofNullable(fallback.getProductById(id).getBody());
         }
     }
     public String orderProduct(Order order) {
@@ -45,7 +45,7 @@ public class ProductAIService {
             ResponseEntity<String> response = productHttpInterface.orderProduct(order);
             return response.getBody();
         } catch (Exception e) {
-            return fallback.orderProduct(order);
+            return fallback.orderProduct(order).getBody();
         }
     }
 }

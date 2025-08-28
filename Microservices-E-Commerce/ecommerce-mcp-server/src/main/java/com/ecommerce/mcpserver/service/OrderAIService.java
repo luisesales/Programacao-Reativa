@@ -3,9 +3,9 @@ package com.ecommerce.mcpserver.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.stereotype.Service;
-import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 import com.ecommerce.mcpserver.exchange.OrderHttpInterface;
 import com.ecommerce.mcpserver.exchange.OrderHttpInterfaceFallback;
@@ -38,11 +38,11 @@ public class OrderAIService {
             ResponseEntity<Order> response = orderHttpInterface.getOrderById(orderId);
             return Optional.ofNullable(response.getBody());
         } catch (Exception e) {
-            return fallback.getOrderById(orderId).getBody();
+            return Optional.ofNullable(fallback.getOrderById(orderId).getBody());
         }
     }
 
-    public Order createOrder(Order order) {        
+    public String createOrder(Order order) {        
         try {
             ResponseEntity<String> response = orderHttpInterface.createOrder(order);
             return response.getBody();

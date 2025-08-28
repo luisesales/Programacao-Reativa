@@ -11,11 +11,10 @@ import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
 import com.ecommerce.mcpserver.model.Order;
-import com.ecommerce.order.model.Order;
 
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
-import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @Component
 @HttpExchange(url = "/orders")
