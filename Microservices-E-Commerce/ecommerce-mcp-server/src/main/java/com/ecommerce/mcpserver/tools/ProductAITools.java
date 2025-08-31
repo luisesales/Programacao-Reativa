@@ -1,52 +1,72 @@
 package com.ecommerce.mcpserver.tools;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
+import com.ecommerce.mcpserver.model.Order;
 import com.ecommerce.mcpserver.model.Product;
-import com.ecommerce.mcpserver.service.OrderAIService;
+import com.ecommerce.mcpserver.service.ProductAIService;
 
 @Component
 public class ProductAITools {
     
-    private final OrderAIService ecommerceAiService;
+    private final ProductAIService productAiService;
 
-    public ProductAITools(OrderAIService ecommerceAiService) {
-        this.ecommerceAiService = ecommerceAiService;
+    public ProductAITools(ProductAIService productAiService) {
+        this.productAiService = productAiService;
     }
 
-    // @Tool(
-    //     name = "verificarNomedoBanco",
-    //     description = "Retorna o nome atual do Banco pela id recebida do banco"
-    // )
-    // public String verificarNomedoBanco() {
-    //     System.out.println("Verificando nome atual do Banco " +ecommerceId+ ": " + name);
-    //     return "O nome atual do Banco " +ecommerceId+ " : " + name;
-    // }
+    @Tool(
+        name = "createProduct",
+        description = "Creates a new product given a name, description, and price and category"
+    )
+    public Product createProduct(
+        @ToolParam(description = """
+                                    The product to be created with:
+                                    name a String of up to 15 characters, 
+                                    description a String of up to 30 characters, 
+                                    price a double with a range of 2 decimal numbers, 
+                                    stockQuantity a int that if not given starts with zero and 
+                                    category a String of up to 15 characters
+                                """
+                    ) Product product
+    ) {
+        return productAiService.createProduct(product);
+    }
 
-    // @Tool(
-    //     name = "mudarNomedoBanco",
-    //     description = "Modifica o nome do banco dado que seja fornecido um nome para o Banco pela id e esse nome não seja igual ao atual"
-    // )
-    // public String mudarNomedoBanco(
-    //     Long ecommerceId,
-    //     @ToolParam(description = "É uma string no formato de até 15 caracteres") String name 
-    // ) {
-    //     System.out.println("Mudnando nome"  +ecommerceId+ " : " + name);
-    //     return "Nome do banco alterado com sucesso!";
-    // }
+    @Tool(
+        name = "getAllProducts",
+        description = "Retrieves all products available in the inventory"
+    )
+    public List<Product> getAllProducts() {
+        return productAiService.getAllProducts();
+    }
+    @Tool(
+        name = "getProductById",
+        description = "Fetches a product by its unique identifier"
+    )
+    public Optional<Product> getProductById(
+        @ToolParam(description = "It's a Long id") Long id
+    ) {
+        return productAiService.getProductById(id);
+    }
 
-    // @Tool(
-    //     name = "deletarContanoBanco",
-    //     description = "Deleta uma conta no banco dado que seja fornecido um nome para a conta e uma conta com esse nome já exista"
-    // )
-    // public String deletarContanoBanco(
-    //     Long accountId
-    // ) {
-    //     System.out.println("Deletando Conta " + accountId);
-    //     return "Conta "+accountId+" deletada com sucesso!";
-    // }
+    public String orderProduct(
+        @ToolParam(description = """
+                                    The order to be placed with:
+                                    productId a Long that represents the id of the product to be ordered, 
+                                    quantity a int that represents the number of items to be ordered, 
+                                    name a String of up to 30 characters representing the name of the customer placing the order,                                     
+                                """
+                    ) Order order
+    ) {
+        return productAiService.orderProduct(order);
+    }
+
 
     @Tool(
         name = "criarContanoBanco",

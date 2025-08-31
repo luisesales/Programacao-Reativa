@@ -39,5 +39,11 @@ public interface ProductHttpInterface{
     @Bulkhead(name= "bhStockGetProductById") 
     public ResponseEntity<String> orderProduct(@RequestBody Order order);
 
+    @PostExchange
+    @CircuitBreaker(name= "cbStockCreateProduct")
+    @Retry(name= "rtStockCreateProduct")
+    @Bulkhead(name= "bhStockCreateProduct") 
+    public ResponseEntity<Product> createProduct(@RequestBody Product product);
+
 
 }

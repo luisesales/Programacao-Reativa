@@ -48,4 +48,13 @@ public class ProductAIService {
             return fallback.orderProduct(order).getBody();
         }
     }
+
+    public Product createProduct(Product product) {
+        try {
+            ResponseEntity<Product> response = productHttpInterface.createProduct(product);
+            return response.getBody();
+        } catch (Exception e) {
+            return fallback.createProduct(product).getBody();
+        }
+    }
 }

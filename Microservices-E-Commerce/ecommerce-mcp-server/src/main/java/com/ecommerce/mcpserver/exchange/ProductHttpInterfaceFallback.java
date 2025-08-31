@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable; 
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ecommerce.mcpserver.model.Product;
 import com.ecommerce.mcpserver.model.Order;
+import com.ecommerce.mcpserver.model.Product;
 
 @Component
 public class ProductHttpInterfaceFallback implements ProductHttpInterface {
@@ -34,5 +34,11 @@ public class ProductHttpInterfaceFallback implements ProductHttpInterface {
     public ResponseEntity<String> orderProduct(@RequestBody Order order) {
         logger.warn("Fallback added to orderProduct. Returning error message.");
         return ResponseEntity.status(503).body("The product ordering service is currently unavailable.");
+    }
+
+    @Override
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+        logger.warn("Fallback added to createProduct. Returning empty product.");
+        return ResponseEntity.status(503).body(new Product());
     }
 }
