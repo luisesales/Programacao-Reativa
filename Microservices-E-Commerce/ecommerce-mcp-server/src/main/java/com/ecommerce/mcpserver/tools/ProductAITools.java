@@ -55,18 +55,7 @@ public class ProductAITools {
         return productAiService.getProductById(id);
     }
 
-    public String orderProduct(
-        @ToolParam(description = """
-                                    The order to be placed with:
-                                    productId a Long that represents the id of the product to be ordered, 
-                                    quantity a int that represents the number of items to be ordered, 
-                                    name a String of up to 30 characters representing the name of the customer placing the order,                                     
-                                """
-                    ) Order order
-    ) {
-        return productAiService.orderProduct(order);
-    }
-
+    
 
     @Tool(
         name = "criarContanoBanco",
