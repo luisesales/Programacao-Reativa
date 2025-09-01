@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ecommerce.mcp.client</groupId>
-	<artifactId>ecommerce-mcp-client</artifactId>
+	<artifactId>e-commerce-mcp-client</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ecommerce-mcp-client</name>
+	<name>e-commerce-mcp-client</name>
 	<description>Spring AI chatbot para gestão bancária</description>
 	<url/>
 	<licenses>

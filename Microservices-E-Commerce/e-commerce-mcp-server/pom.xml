@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ecommerce.mcpserver</groupId>
-	<artifactId>ecommerce-mcp-server</artifactId>
+	<artifactId>e-commerce-mcp-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ecommerce-mcp-server</name>
+	<name>e-commerce-mcp-server</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
