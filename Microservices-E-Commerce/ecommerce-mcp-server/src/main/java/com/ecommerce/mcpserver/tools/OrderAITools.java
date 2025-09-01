@@ -1,5 +1,8 @@
 package com.ecommerce.mcpserver.tools;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
@@ -10,16 +13,44 @@ import com.ecommerce.mcpserver.service.OrderAIService;
 @Component
 public class OrderAITools {
 
-    public String orderProduct(
+    private final OrderAIService orderAiService;
+
+    public OrderAITools(OrderAIService orderAiService) {
+        this.orderAiService = orderAiService;
+    }
+
+    @Tool(
+        name = "createOrder",
+        description = "Creates a new order given a name and a List of tuples containing the product id and a quantity for each tuple"
+    )
+    public String createOrder(
         @ToolParam(description = """
                                     The order to be placed with:
+                                    productsQuantity a tuple List with the following variables in each component:
                                     productId a Long that represents the id of the product to be ordered, 
                                     quantity a int that represents the number of items to be ordered, 
-                                    name a String of up to 30 characters representing the name of the customer placing the order,                                     
+                                    lastly after the List a name a String of up to 30 characters representing the name of the customer placing the order,                                     
                                 """
                     ) Order order
     ) {
-        return orderAiService.orderProduct(order);
+        return orderAiService.createOrder(order);
+    }
+    
+    @Tool(
+        name = "getAllOrders",
+        description = "Retrieves all orders available in the inventory"
+    )
+    public List<Order> getAllOrders(){
+        return orderAiService.getOrders();
     }
 
+    @Tool(
+        name = "getOrderById",
+           description = "Fetches a product by its unique identifier"
+    )
+    public Optional<Order> getOrderById(
+        @ToolParam(description = "It's a Long id") Long id
+    ) {
+        return orderAiService.getOrder(id);
+    }
 }
