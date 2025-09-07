@@ -1,4 +1,4 @@
-package com.ecommerce.mcp.client.controllers;
+package com.ecommerce.mcp.client.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

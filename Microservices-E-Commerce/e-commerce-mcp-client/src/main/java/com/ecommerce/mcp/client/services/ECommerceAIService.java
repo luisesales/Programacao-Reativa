@@ -87,8 +87,7 @@ public class ECommerceAIService implements ChatServiceAi {
 
             Flux<String> flux = chatClient.prompt()
                 .system(systemSpec -> systemSpec
-                    .text(systemTemplate)
-                    .param("Banco", "ECommerceAI")
+                    .text(systemTemplate)                    
                     .param("Contexto", context))
                 .user(userSpec -> userSpec
                     .text(userTemplate)
@@ -154,8 +153,7 @@ public class ECommerceAIService implements ChatServiceAi {
     }
 
     private String fillTemplate(String template, String context, String prompt) {
-        return template
-                .replace("${Banco}", "ECommerceAI")
+        return template                
                 .replace("${Contexto}", context)
                 .replace("${Pergunta}", prompt);
     }
