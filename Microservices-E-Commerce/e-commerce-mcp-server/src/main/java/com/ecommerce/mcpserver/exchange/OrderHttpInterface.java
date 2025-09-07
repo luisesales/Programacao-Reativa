@@ -23,19 +23,19 @@ public interface OrderHttpInterface {
 
     @GetExchange
     @CircuitBreaker(name= "cbOrderGetAllOrders")
-    @Retry(name= "rtStockGetAllOrders")
-    @Bulkhead(name= "bhStockGetAllOrders")    
+    @Retry(name= "rtOrderGetAllOrders")
+    @Bulkhead(name= "bhOrderGetAllOrders")    
     ResponseEntity<List<Order>> getAllOrders();
 
     @GetExchange("/{id}")
-    @CircuitBreaker(name= "cbStockGetOrderById")
-    @Retry(name= "rtStockGetOrderById")
-    @Bulkhead(name= "bhStockGetOrderById")  
+    @CircuitBreaker(name= "cbOrderGetOrderById")
+    @Retry(name= "rtOrderGetOrderById")
+    @Bulkhead(name= "bhOrderGetOrderById")  
     public ResponseEntity<Order> getOrderById(@PathVariable Long id); 
 
     @PostExchange
-    @CircuitBreaker(name= "cbStockOrderOrder")
-    @Retry(name= "rtStockOrderOrder")
-    @Bulkhead(name= "bhStockGetOrderById") 
+    @CircuitBreaker(name= "cbOrderCreateOrder")
+    @Retry(name= "rtOrderCreateOrder")
+    @Bulkhead(name= "bhOrderCreateOrder") 
     public ResponseEntity<String> createOrder(@RequestBody Order order);
 }
