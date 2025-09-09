@@ -1,0 +1,76 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+    
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceDS1",
+            "request": "launch",
+            "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
+            "projectName": "e-commerce-discovery-service",            
+            "vmArgs": "-Dspring.profiles.active=discovery-server-1"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceDS2",
+            "request": "launch",
+            "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
+            "projectName": "e-commerce-discovery-service",            
+            "vmArgs": "-Dspring.profiles.active=discovery-server-2"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceDS3",
+            "request": "launch",
+            "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
+            "projectName": "e-commerce-discovery-service",            
+            "vmArgs": "-Dspring.profiles.active=discovery-server-3"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceProduct1",
+            "request": "launch",
+            "mainClass": "com.ecommerce.product.service.ECommerceProductServiceApplication",
+            "projectName": "e-commerce-product-service",
+            "vmArgs": "-Dspring.profiles.active=discovery-server-2"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceProduct2",
+            "request": "launch",
+            "mainClass": "com.ecommerce.product.service.ECommerceProductServiceApplication",
+            "projectName": "e-commerce-product-service"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceOrderServiceApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.order.service.ECommerceOrderServiceApplication",
+            "projectName": "e-commerce-order-service"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceApiGatewayApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.api.gateway.ECommerceApiGatewayApplication",
+            "projectName": "e-commerce-api-gateway"
+
+        },
+        {
+            "type": "java",
+            "name": "ECommerceConfigServerApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.config.server.ECommerceConfigServerApplication",
+            "projectName": "e-commerce-config-server"
+        }
+    ]
+}
