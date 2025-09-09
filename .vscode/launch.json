@@ -45,7 +45,7 @@
         },
         {
             "type": "java",
-            "name": "ECommerceStock1",
+            "name": "ECommerceStock2",
             "request": "launch",
             "mainClass": "com.ecommerce.stock.ECommerceStockApplication",
             "projectName": "e-commerce-stock",
