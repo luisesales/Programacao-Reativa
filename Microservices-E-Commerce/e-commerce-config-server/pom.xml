@@ -12,7 +12,7 @@
 	<groupId>com.ecommerce.config.server</groupId>
 	<artifactId>e-commerce-config-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ecommerce-config-server</name>
+	<name>e-commerce-config-server</name>
 	<description>Demo project for Spring Boot</description>
 	
 	<properties>
