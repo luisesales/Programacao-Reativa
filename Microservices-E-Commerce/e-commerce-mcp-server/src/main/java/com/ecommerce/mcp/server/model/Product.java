@@ -1,4 +1,4 @@
-package com.ecommerce.mcpserver.model;
+package com.ecommerce.mcp.server.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

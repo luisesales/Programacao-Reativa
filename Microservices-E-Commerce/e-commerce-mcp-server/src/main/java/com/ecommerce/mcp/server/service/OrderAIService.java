@@ -1,4 +1,4 @@
-package com.ecommerce.mcpserver.service;
+package com.ecommerce.mcp.server.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.ecommerce.mcpserver.exchange.OrderHttpInterface;
-import com.ecommerce.mcpserver.exchange.OrderHttpInterfaceFallback;
-import com.ecommerce.mcpserver.model.Order;
+import com.ecommerce.mcp.server.exchange.OrderHttpInterface;
+import com.ecommerce.mcp.server.exchange.OrderHttpInterfaceFallback;
+import com.ecommerce.mcp.server.model.Order;
 
 
 

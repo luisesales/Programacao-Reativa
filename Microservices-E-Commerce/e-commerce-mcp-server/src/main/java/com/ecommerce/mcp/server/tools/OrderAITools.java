@@ -1,4 +1,4 @@
-package com.ecommerce.mcpserver.tools;
+package com.ecommerce.mcp.server.tools;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,8 +7,8 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
-import com.ecommerce.mcpserver.model.Order;
-import com.ecommerce.mcpserver.service.OrderAIService;
+import com.ecommerce.mcp.server.model.Order;
+import com.ecommerce.mcp.server.service.OrderAIService;
 
 @Component
 public class OrderAITools {

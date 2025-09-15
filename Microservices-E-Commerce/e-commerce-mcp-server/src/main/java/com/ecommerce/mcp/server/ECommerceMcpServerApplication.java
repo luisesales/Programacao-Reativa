@@ -1,4 +1,4 @@
-package com.ecommerce.mcpserver;
+package com.ecommerce.mcp.server;
 
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
@@ -12,17 +12,18 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
-import com.ecommerce.mcpserver.tools.*;
-import com.ecommerce.mcpserver.exchange.ProductHttpInterface;
-import com.ecommerce.mcpserver.exchange.OrderHttpInterface;
+import com.ecommerce.mcp.server.exchange.OrderHttpInterface;
+import com.ecommerce.mcp.server.exchange.ProductHttpInterface;
+import com.ecommerce.mcp.server.tools.OrderAITools;
+import com.ecommerce.mcp.server.tools.ProductAITools;
 
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients
-public class ECommerceMCPServerApplication {
+public class ECommerceMcpServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(ECommerceMCPServerApplication.class, args);
+		SpringApplication.run(ECommerceMcpServerApplication.class, args);
 	}
 
 	@Bean
@@ -58,7 +59,7 @@ public class ECommerceMCPServerApplication {
 
 	@Bean
 	public OrderHttpInterface orderHttpInterface(
-		@Value("http://localhost:8083/ecommerce-order") String baseUrl
+		@Value("http://localhost:8085/ecommerce-order") String baseUrl
 	) {
 		RestClient ordersClient = RestClient.builder()
 			.baseUrl(baseUrl)

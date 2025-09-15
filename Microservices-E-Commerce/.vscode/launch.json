@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "ECommerceMCPServerApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.mcpserver.ECommerceMCPServerApplication",
+            "projectName": "e-commerce-mcp-server"
+        },
+        {
+            "type": "java",
             "name": "ECommerceOrderApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.order.ECommerceOrderApplication",

@@ -1,4 +1,4 @@
-package com.ecommerce.mcpserver.exchange;
+package com.ecommerce.mcp.server.exchange;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable; 
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ecommerce.mcpserver.model.Order;
+import com.ecommerce.mcp.server.model.Order;
 
 @Component
 public class OrderHttpInterfaceFallback implements OrderHttpInterface {

@@ -8,7 +8,7 @@
 		<version>3.5.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.ecommerce.mcpserver</groupId>
+	<groupId>com.ecommerce.mcp.server</groupId>
 	<artifactId>e-commerce-mcp-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>e-commerce-mcp-server</name>

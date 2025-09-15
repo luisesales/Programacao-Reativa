@@ -1,4 +1,4 @@
-package com.ecommerce.mcpserver.exchange;
+package com.ecommerce.mcp.server.exchange;
 
 import java.util.List;
 
@@ -10,12 +10,12 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.ecommerce.mcpserver.model.Order;
-import com.ecommerce.mcpserver.model.Product;
+import com.ecommerce.mcp.server.model.Order;
+import com.ecommerce.mcp.server.model.Product;
 
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
-import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @Component
 @HttpExchange(url = "/products")
