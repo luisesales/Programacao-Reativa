@@ -4,7 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    
+        {
+            "type": "java",
+            "name": "ECommerceOrderApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.order.ECommerceOrderApplication",
+            "projectName": ""
+        },
         {
             "type": "java",
             "name": "Current File",
@@ -16,7 +22,7 @@
             "name": "ECommerceDS1",
             "request": "launch",
             "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
-            "projectName": "e-commerce-discovery-service",            
+            "projectName": "e-commerce-discovery-service",
             "vmArgs": "-Dspring.profiles.active=discovery-server-1"
         },
         {
@@ -24,7 +30,7 @@
             "name": "ECommerceDS2",
             "request": "launch",
             "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
-            "projectName": "e-commerce-discovery-service",            
+            "projectName": "e-commerce-discovery-service",
             "vmArgs": "-Dspring.profiles.active=discovery-server-2"
         },
         {
@@ -32,44 +38,48 @@
             "name": "ECommerceDS3",
             "request": "launch",
             "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
-            "projectName": "e-commerce-discovery-service",            
+            "projectName": "e-commerce-discovery-service",
             "vmArgs": "-Dspring.profiles.active=discovery-server-3"
         },
         {
             "type": "java",
-            "name": "ECommerceProductServiceApplication",
+            "name": "ECommerceStock1",
             "request": "launch",
-            "mainClass": "com.ecommerce.product.service.ECommerceProductServiceApplication",
-            "projectName": "e-commerce-product-service"
+            "mainClass": "com.ecommerce.stock.ECommerceStockApplication",
+            "projectName": "e-commerce-stock",
+            "vmArgs": "-Dspring.profiles.active=stock-server-1"
         },
         {
             "type": "java",
-            "name": "ECommerceOrderServiceApplication",
+            "name": "ECommerceStock2",
             "request": "launch",
-            "mainClass": "com.ecommerce.order.service.ECommerceOrderServiceApplication",
-            "projectName": "e-commerce-order-service"
+            "mainClass": "com.ecommerce.stock.ECommerceStockApplication",
+            "projectName": "e-commerce-stock",
+            "vmArgs": "-Dspring.profiles.active=stock-server-2"
         },
         {
             "type": "java",
-            "name": "ECommerceCartServiceApplication",
+            "name": "ECommerceOrder1",
             "request": "launch",
-            "mainClass": "com.ecommerce.cart.service.ECommerceCartServiceApplication",
-            "projectName": "e-commerce-cart-service"
+            "mainClass": "com.ecommerce.order.ECommerceOrderApplication",
+            "projectName": "e-commerce-order",
+            "vmArgs": "-Dspring.profiles.active=order-server-1"
         },
         {
             "type": "java",
-            "name": "ECommerceAuthServerApplication",
+            "name": "ECommerceOrder2",
             "request": "launch",
-            "mainClass": "com.ecommerce.auth.server.ECommerceAuthServerApplication",
-            "projectName": "e-commerce-auth-server"
+            "mainClass": "com.ecommerce.order.ECommerceOrderApplication",
+            "projectName": "e-commerce-order",
+            "vmArgs": "-Dspring.profiles.active=order-server-2"
         },
         {
             "type": "java",
             "name": "ECommerceApiGatewayApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.api.gateway.ECommerceApiGatewayApplication",
-            "projectName": "e-commerce-api-gateway"
-
+            "projectName": "e-commerce-api-gateway",
+            "vmArgs": "-Dspring.profiles.active=dev"
         },
         {
             "type": "java",
@@ -77,6 +87,38 @@
             "request": "launch",
             "mainClass": "com.ecommerce.config.server.ECommerceConfigServerApplication",
             "projectName": "e-commerce-config-server"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceMcpClient1",
+            "request": "launch",
+            "mainClass": "com.ecommerce.mcp.client.ECommerceMcpClientApplication",
+            "projectName": "e-commerce-mcp-client",
+            "vmArgs": "-Dspring.profiles.active=mcp-client-server-1"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceMcpClient2",
+            "request": "launch",
+            "mainClass": "com.ecommerce.mcp.client.ECommerceMcpClientApplication",
+            "projectName": "e-commerce-mcp-client",
+            "vmArgs": "-Dspring.profiles.active=mcp-client-server-2"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceMcpServer1",
+            "request": "launch",
+            "mainClass": "com.ecommerce.mcp.server.ECommerceMcpServerApplication",
+            "projectName": "e-commerce-mcp-server",
+            "vmArgs": "-Dspring.profiles.active=mcp-server-1"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceMcpServer2",
+            "request": "launch",
+            "mainClass": "com.ecommerce.mcp.server.ECommerceMcpServerApplication",
+            "projectName": "e-commerce-mcp-server",
+            "vmArgs": "-Dspring.profiles.active=mcp-server-2"
         }
     ]
 }

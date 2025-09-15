@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class OrderResult{
@@ -12,6 +13,7 @@ public class OrderResult{
     private Long id;
     private String response;
     private boolean success;
+    @OneToOne
     private Product product;
 
     public void setResponse(String response) {
