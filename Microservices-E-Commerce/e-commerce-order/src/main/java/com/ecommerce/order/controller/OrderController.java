@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.service.OrderService;
 
+@RestController
 @RequestMapping("/orders")
 public class OrderController {
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
