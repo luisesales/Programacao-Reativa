@@ -4,7 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    
+        {
+            "type": "java",
+            "name": "ECommerceOrderApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.order.ECommerceOrderApplication",
+            "projectName": ""
+        },
         {
             "type": "java",
             "name": "Current File",
@@ -16,7 +22,7 @@
             "name": "ECommerceDS1",
             "request": "launch",
             "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
-            "projectName": "e-commerce-discovery-service",            
+            "projectName": "e-commerce-discovery-service",
             "vmArgs": "-Dspring.profiles.active=discovery-server-1"
         },
         {
@@ -24,7 +30,7 @@
             "name": "ECommerceDS2",
             "request": "launch",
             "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
-            "projectName": "e-commerce-discovery-service",            
+            "projectName": "e-commerce-discovery-service",
             "vmArgs": "-Dspring.profiles.active=discovery-server-2"
         },
         {
@@ -32,7 +38,7 @@
             "name": "ECommerceDS3",
             "request": "launch",
             "mainClass": "com.ecommerce.discovery.service.ECommerceDiscoveryServiceApplication",
-            "projectName": "e-commerce-discovery-service",            
+            "projectName": "e-commerce-discovery-service",
             "vmArgs": "-Dspring.profiles.active=discovery-server-3"
         },
         {
@@ -98,7 +104,7 @@
             "projectName": "e-commerce-mcp-client",
             "vmArgs": "-Dspring.profiles.active=mcp-client-server-2"
         },
-         {
+        {
             "type": "java",
             "name": "ECommerceMcpServer1",
             "request": "launch",
@@ -113,6 +119,6 @@
             "mainClass": "com.ecommerce.mcp.server.ECommerceMcpServerApplication",
             "projectName": "e-commerce-mcp-server",
             "vmArgs": "-Dspring.profiles.active=mcp-server-2"
-        },
+        }
     ]
 }
