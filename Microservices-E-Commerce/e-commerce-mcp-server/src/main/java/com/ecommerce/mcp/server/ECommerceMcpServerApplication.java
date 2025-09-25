@@ -33,7 +33,7 @@ public class ECommerceMcpServerApplication {
 
 	@Bean
 	public ProductHttpInterface productHttpInterface(
-		@Value("http://localhost:8085/ecommerce-stock") String baseUrl
+		@Value("http://localhost:8085/e-commerce-stock") String baseUrl
 	) {
 		RestClient productsClient = RestClient.builder()
 			.baseUrl(baseUrl)
@@ -57,7 +57,7 @@ public class ECommerceMcpServerApplication {
 
 	@Bean
 	public OrderHttpInterface orderHttpInterface(
-		@Value("http://localhost:8085/ecommerce-order") String baseUrl
+		@Value("http://localhost:8085/e-commerce-order") String baseUrl
 	) {
 		RestClient ordersClient = RestClient.builder()
 			.baseUrl(baseUrl)

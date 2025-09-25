@@ -19,7 +19,8 @@ public class OrderAIService {
     private final OrderHttpInterface orderHttpInterface;
     private final OrderHttpInterfaceFallback fallback;
 
-    public OrderAIService(@Qualifier("orderHttpInterface") OrderHttpInterface orderHttpInterface, OrderHttpInterfaceFallback fallback) {
+    public OrderAIService(@Qualifier("ordersHttpInterface") OrderHttpInterface orderHttpInterface, 
+                          @Qualifier("ordersHttpInterfaceFallback") OrderHttpInterfaceFallback fallback) {
         this.orderHttpInterface = orderHttpInterface;
         this.fallback = fallback;
     }

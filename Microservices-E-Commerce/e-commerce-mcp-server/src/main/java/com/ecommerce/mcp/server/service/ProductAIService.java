@@ -18,7 +18,7 @@ public class ProductAIService {
     private final ProductHttpInterface productHttpInterface;
     private final ProductHttpInterfaceFallback fallback;
 
-    public ProductAIService(@Qualifier("productHttpInterfaceImpl") ProductHttpInterface productHttpInterface,
+    public ProductAIService(@Qualifier("productsHttpInterface") ProductHttpInterface productHttpInterface,
                             @Qualifier("productHttpInterfaceFallback") ProductHttpInterfaceFallback fallback) {
         this.productHttpInterface = productHttpInterface;
         this.fallback = fallback;
