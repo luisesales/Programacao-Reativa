@@ -3,7 +3,6 @@ package com.ecommerce.mcp.server.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +18,14 @@ public class OrderAIService {
     private final OrderHttpInterface orderHttpInterface;
     private final OrderHttpInterfaceFallback fallback;
 
-    public OrderAIService(@Qualifier("ordersHttpInterface") OrderHttpInterface orderHttpInterface, 
-                          @Qualifier("ordersHttpInterfaceFallback") OrderHttpInterfaceFallback fallback) {
+    // public OrderAIService(@Qualifier("ordersHttpInterface") OrderHttpInterface orderHttpInterface, 
+    //                       @Qualifier("orderHttpInterfaceFallback") OrderHttpInterfaceFallback fallback) {
+    //     this.orderHttpInterface = orderHttpInterface;
+    //     this.fallback = fallback;
+    // }
+
+    public OrderAIService(OrderHttpInterface orderHttpInterface, 
+                          OrderHttpInterfaceFallback fallback) {
         this.orderHttpInterface = orderHttpInterface;
         this.fallback = fallback;
     }
