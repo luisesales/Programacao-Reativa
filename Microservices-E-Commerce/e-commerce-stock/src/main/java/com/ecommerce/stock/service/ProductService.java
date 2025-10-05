@@ -122,6 +122,8 @@ public class ProductService {
                 result.setSuccess(false);
                 result.setResponse("Product not found with id: " + key);
                 results.add(result);
+                result.setProduct(new Product());
+                result.getProduct().setNotFound();
             }
             response.append("Product ID: ").append(result.getProduct().getId())
                    .append(", Name: ").append(result.getProduct().getName())

@@ -1,10 +1,12 @@
-package com.ecommerce.order.model;
+package com.ecommerce.stock.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -16,14 +18,14 @@ public class Product {
     @Size(min = 5, message = "The name must have at least 5 characters")    
     private String name;
     @NotBlank(message = "Description is mandatory")
-    @Size(min = 5, max=30, message = "The description must have at least 5 characters and maximum 30 characters")
+    @Size(min = 5, max = 30, message = "The description must have at least 5 characters and maximum 30 characters")
     private String description;
-    @NotBlank(message = "Price is mandatory")
+    @NotEmpty(message = "Price is mandatory")
     private double price;
-    @NotBlank(message = "Stock Quantity is mandatory")
+    @NotNull(message = "Stock Quantity is mandatory")
     private int stockQuantity;
     @NotBlank(message = "Category is mandatory")
-    @Size(min = 5, max=15, message = "The category must have at least 5 characters and maximum 15 characters")
+    @Size(min = 5, max = 15, message = "The category must have at least 5 characters and maximum 15 characters")
     private String category;
 
     public Long getId() {
@@ -69,6 +71,15 @@ public class Product {
         } else {
             throw new IllegalArgumentException("Insufficient stock to decrease by " + quantity);
         }
+    }
+
+    public void setNotFound() {
+        this.id = -1L;
+        this.name = "Product Not Found";
+        this.description = "N/A";
+        this.price = 0.0;
+        this.stockQuantity = 0;
+        this.category = "N/A";
     }
 
 }

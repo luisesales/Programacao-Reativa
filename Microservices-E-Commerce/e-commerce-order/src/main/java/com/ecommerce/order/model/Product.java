@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -18,9 +19,9 @@ public class Product {
     @NotBlank(message = "Description is mandatory")
     @Size(min = 5, max=30, message = "The description must have at least 5 characters and maximum 30 characters")
     private String description;
-    @NotBlank(message = "Price is mandatory")
+    @NotNull(message = "Price is mandatory")
     private double price;
-    @NotBlank(message = "Stock Quantity is mandatory")
+    @NotNull(message = "Stock Quantity is mandatory")
     private int stockQuantity;
     @NotBlank(message = "Category is mandatory")
     @Size(min = 5, max=15, message = "The category must have at least 5 characters and maximum 15 characters")

@@ -17,24 +17,7 @@ public class ECommerceOrderApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ECommerceOrderApplication.class, args);
-	}
-
-	@Bean
-	public ProductHttpInterface productHttpInterface(
-		@Value("http://localhost:8085/e-commerce-stock") String baseUrl
-	) {
-		RestClient productsClient = RestClient.builder()
-			.baseUrl(baseUrl)
-			.build();
-
-		System.out.println(baseUrl);
-
-		HttpServiceProxyFactory factory = HttpServiceProxyFactory
-			.builderFor(RestClientAdapter.create(productsClient))
-			.build();
-
-		return factory.createClient(ProductHttpInterface.class);
-	}
+	}	
 }
 
 

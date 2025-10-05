@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class OrderResult{
@@ -14,6 +15,7 @@ public class OrderResult{
     private String response;
     private boolean success;
     @OneToOne
+    @NotNull(message = "Product is mandatory")
     private Product product;
 
     public void setResponse(String response) {
