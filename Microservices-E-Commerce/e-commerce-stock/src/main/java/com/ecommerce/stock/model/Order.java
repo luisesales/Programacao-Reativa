@@ -1,4 +1,4 @@
-package com.ecommerce.stock.model;
+package com.ecommerce.order.model;
 
 import java.util.HashMap;
 
@@ -7,15 +7,22 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 
 @Entity
 @Table(name = "orders")
 public class Order{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)    
     private Long id;
+    @NotBlank(message = "Name is mandatory")
+    @Size(min = 5, message = "The name must have at least 5 characters")
     private String name;
+    @NotBlank(message = "Products Ordered are mandatory")
     private HashMap<Long,Integer> productsQuantity;
+    @NotBlank(message = "Total Price is mandatory")
     private double totalPrice;    
 
     public Long getId() {

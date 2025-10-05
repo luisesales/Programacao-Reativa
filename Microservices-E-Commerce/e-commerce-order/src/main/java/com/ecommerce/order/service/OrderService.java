@@ -5,14 +5,14 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.order.exchange.ProductHttpInterface;
+import com.ecommerce.order.exchange.ProductHttpInterfaceFallback;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.repository.OrderRepository;
-
-import com.ecommerce.order.exchange.ProductHttpInterface;
 
 @Service
 public class OrderService {
@@ -22,8 +22,14 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
 
-    @Autowired
-    private ProductHttpInterface productHttpInterface;
+    private final ProductHttpInterface productHttpInterface;
+    private final ProductHttpInterfaceFallback fallback;
+
+    public OrderService(ProductHttpInterface productHttpInterface,
+                            ProductHttpInterfaceFallback fallback) {
+        this.productHttpInterface = productHttpInterface;
+        this.fallback = fallback;
+    }
 
     public List<Order> getAllOrders() {
         logger.info("Fetching all orders");
@@ -38,9 +44,17 @@ public class OrderService {
     public String createOrder(Order order) {
         logger.info("Creating new order: {}", order.getId());
         try {
-            Order savedOrder = orderRepository.save(order);
-            logger.info("Order created successfully with id: {}", savedOrder.getId());
-            return productHttpInterface.orderProduct(savedOrder).getBody();
+
+            ResponseEntity<String> response = productHttpInterface.orderProduct(order);
+
+            if (response != null && response.getStatusCode().is2xxSuccessful()) {
+                Order savedOrder = orderRepository.save(order);
+                logger.info("Order created successfully: {}", savedOrder.getId());
+                return "Order created successfully with id: " + savedOrder.getId() + "\n" + response.getBody();
+            } else {
+                logger.error("Failed to order products for order id: {}", order.getId());
+                return "Failed to order products." + (response != null ? response.getBody() : "No response from product service");
+            }
         } catch (Exception e) {
             logger.error("Error creating order: {}", e.getMessage());
             return "Error creating order: " + e.getMessage();
