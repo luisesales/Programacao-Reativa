@@ -101,7 +101,8 @@
             "request": "launch",
             "mainClass": "com.ecommerce.mcp.client.ECommerceMcpClientApplication",
             "projectName": "e-commerce-mcp-client",
-            "vmArgs": "-Dspring.profiles.active=mcp-client-server-1"
+            "vmArgs": "-Dspring.profiles.active=mcp-client-server-1",
+            "envFile": "${workspaceFolder}/Microservices-E-Commerce/e-commerce-mcp-client/src/main/resources/.env"
         },
         {
             "type": "java",
@@ -109,7 +110,8 @@
             "request": "launch",
             "mainClass": "com.ecommerce.mcp.client.ECommerceMcpClientApplication",
             "projectName": "e-commerce-mcp-client",
-            "vmArgs": "-Dspring.profiles.active=mcp-client-server-2"
+            "vmArgs": "-Dspring.profiles.active=mcp-client-server-2",
+            "envFile": "${workspaceFolder}/Microservices-E-Commerce/e-commerce-mcp-client/src/main/resources/.env"
         },
         {
             "type": "java",
