@@ -11,9 +11,7 @@ public class DocumentReader {
     DocumentReader() {        
     }
 
-    public List<Document> loadText() {
-        // TikaDocumentReader tikaDocumentReader = new TikaDocumentReader(this.resource);
-        // return tikaDocumentReader.read();
+    public List<Document> loadText() {        
         String exemplo = """
         Este é um regulamento fictício utilizado apenas para testes da aplicação.
         usuário pode Criar e Deletar Produtos no Estoque e realizar compras utilizando o serviço de IA.

@@ -57,10 +57,7 @@ public class ECommerceAIService implements ChatServiceAi {
             .defaultAdvisors(
                     MessageChatMemoryAdvisor.builder(chatMemory).build())
         .build();
-        this.ecommerceAI = ecommerceAI;
-        // this.evaluator = RelevancyEvaluator.builder()
-        //                     .chatClientBuilder(ChatClient.builder(chatModel))
-        //                     .build();
+        this.ecommerceAI = ecommerceAI;        
     }
 
     @Override
