@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.annotations.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.stock.model.Order;
@@ -22,22 +26,26 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Cacheable(value = "products")
     public List<Product> getAllProducts() {        
         logger.info("Fetching all products");
         return productRepository.findAll();
     }
     
+    @Cacheable(value = "products", key = "#id")
     public Optional<Product> getProductById(Long id) {
         logger.info("Fetching product with id: {}", id);
         return productRepository.findById(id);
         
     }
 
+    @CacheEvict(value = "products", key = "#product.id")
     public Product createProduct(Product product) {
         logger.info("Creating new product: {}", product.getName());
         return productRepository.save(product);
     }
     
+    @CacheEvict(value = "products", key = "#id")
     public Product updateProduct(Long id, Product productDetails) {
         logger.info("Updating product with id: {}", id);
         return productRepository.findById(id)
@@ -56,6 +64,7 @@ public class ProductService {
                     return null;
                 });
     }
+    @CacheEvict(value = "products", key = "#id")
     public boolean deleteProduct(Long id) {
         logger.info("Deleting product with id: {}", id);
         productRepository.findById(id)
@@ -67,15 +76,18 @@ public class ProductService {
         logger.warn("Product with id {} not found for deletion.", id);
         return false;
     }    
+    @Cacheable(value = "products", key = "#category")
     public List<Product> findByCategory(String category) {
         logger.info("Fetching products by category: {}", category);
         return productRepository.findByCategory(category);
     }
+    @Cacheable(value = "products", key = "{#minPrice, #maxPrice}")
     public List<Product> findByPriceBetween(Double minPrice, Double maxPrice) {
         logger.info("Fetching products with price between {} and {}", minPrice, maxPrice);
         return productRepository.findByPriceBetween(minPrice, maxPrice);
     }
 
+    @CacheEvict(value = "products", key = "#id")
     public boolean buyProduct(Long id, int quantity) {
         logger.info("Buying product with id: {} and quantity: {}", id, quantity);
         return productRepository.findById(id)
@@ -95,7 +107,7 @@ public class ProductService {
                     return false;
                 });
     }
-
+    @CacheEvict(value = "products", key = "#product.id")
     public String buyProducts(Order order) {
         logger.info("Processing order for products with total price: {}", order.getTotalPrice());
         StringBuilder response = new StringBuilder();
@@ -136,7 +148,7 @@ public class ProductService {
         return response.toString();
     }
 
-
+    @CacheEvict(value = "products", key = "#id")
     public boolean increaseStock(Long id, int quantity) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
         return productRepository.findById(id)
@@ -150,5 +162,11 @@ public class ProductService {
                     logger.warn("Product with id {} not found for stock increase.", id);
                     return false;
                 });
+    }
+
+    @Scheduled(fixedRate = 10_000)
+    @CacheEvict(value="products", allEntries = true)
+    public void clearCache() {
+        System.out.println("Products Cache was cleared");
     }
 }
