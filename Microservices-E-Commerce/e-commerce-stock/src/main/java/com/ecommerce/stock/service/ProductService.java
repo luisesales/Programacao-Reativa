@@ -3,8 +3,10 @@ package com.ecommerce.stock.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
-import org.hibernate.annotations.Cache;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Cacheable(value = "products")
     public List<Product> getAllProducts() {        
@@ -110,42 +115,59 @@ public class ProductService {
     @CacheEvict(value = "products", key = "#product.id")
     public String buyProducts(Order order) {
         logger.info("Processing order for products with total price: {}", order.getTotalPrice());
+        
         StringBuilder response = new StringBuilder();
         List<OrderResult> results = new ArrayList<OrderResult>();
         for(Long key : order.getProductsQuantity().keySet()) {
-            Product product = productRepository.findById(key).orElse(null);
-            OrderResult result = new OrderResult();
-            if (product != null) {                
-                int quantity = order.getProductsQuantity().get(key);
-                if (product.getStockQuantity() >= quantity) {
-                    product.decreaseStock(quantity);
-                    productRepository.save(product);                    
-                    result.setProduct(product);
-                    result.setSuccess(true);
-                    result.setResponse("Order successful for product: " + product.getName());
-                    results.add(result);
-                } else {                    
-                    result.setProduct(product);
-                    result.setSuccess(false);
-                    result.setResponse("Insufficient stock for product: " + product.getName());
-                    results.add(result);
+            String lockKey = "lock:product:" + key;
+            RLock lock = redissonClient.getLock(lockKey);
+
+            try {
+                if (lock.tryLock(5, 10, TimeUnit.SECONDS)) {
+                    Product product = productRepository.findById(key).orElse(null);
+                    OrderResult result = new OrderResult();
+                    if (product != null) {                
+                        int quantity = order.getProductsQuantity().get(key);
+                        if (product.getStockQuantity() >= quantity) {
+                            product.decreaseStock(quantity);
+                            productRepository.save(product);                    
+                            result.setProduct(product);
+                            result.setSuccess(true);
+                            result.setResponse("Order successful for product: " + product.getName());
+                            results.add(result);
+                        } else {                    
+                            result.setProduct(product);
+                            result.setSuccess(false);
+                            result.setResponse("Insufficient stock for product: " + product.getName());
+                            results.add(result);
+                        }
+                    } else {                
+                        result.setSuccess(false);
+                        result.setResponse("Product not found with id: " + key);
+                        results.add(result);
+                        result.setProduct(new Product());
+                        result.getProduct().setNotFound();
+                    }
+                    response.append("Product ID: ").append(result.getProduct().getId())
+                        .append(", Name: ").append(result.getProduct().getName())
+                        .append(", Quantity: ").append(order.getProductsQuantity().get(key))
+                        .append(", Status:").append(result.isSuccess() ? "Success" : "Failed")
+                        .append(", Reason: ").append(result.getResponse())
+                        .append("\n");
+                    } else {
+                    logger.warn("Could not acquire lock for processing product order.");
+                    response.append("Could not process order at this time. Please try again later.");
+                    }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }finally {
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
                 }
-            } else {                
-                result.setSuccess(false);
-                result.setResponse("Product not found with id: " + key);
-                results.add(result);
-                result.setProduct(new Product());
-                result.getProduct().setNotFound();
             }
-            response.append("Product ID: ").append(result.getProduct().getId())
-                   .append(", Name: ").append(result.getProduct().getName())
-                   .append(", Quantity: ").append(order.getProductsQuantity().get(key))
-                   .append(", Status:").append(result.isSuccess() ? "Success" : "Failed")
-                   .append(", Reason: ").append(result.getResponse())
-                   .append("\n");
-        }
+        }     
         logger.info("Order processed with results: {}", results);
-        return response.toString();
+        return response.toString();   
     }
 
     @CacheEvict(value = "products", key = "#id")
