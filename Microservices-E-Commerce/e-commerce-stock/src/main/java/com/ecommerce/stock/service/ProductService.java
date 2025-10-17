@@ -1,12 +1,10 @@
 package com.ecommerce.stock.service;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.RLockReactive;
+import org.redisson.api.RedissonReactiveClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +18,11 @@ import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.repository.ProductRepository;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
+
 @Service
 public class ProductService {
 
@@ -29,32 +32,45 @@ public class ProductService {
     private ProductRepository productRepository;
 
     @Autowired
-    private RedissonClient redissonClient;
+    private RedissonReactiveClient redissonClient;
+
+    
 
     @Cacheable(value = "products")
-    public List<Product> getAllProducts() {        
+    public Flux<Product> getAllProducts() {        
         logger.info("Fetching all products");
-        return productRepository.findAll();
+        return productRepository.findAll()
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnError(e -> logger.error("Error fetching all products", e));
     }
     
     @Cacheable(value = "products", key = "#id")
-    public Optional<Product> getProductById(Long id) {
+    public Mono<Product> getProductById(Long id) {
         logger.info("Fetching product with id: {}", id);
-        return productRepository.findById(id);
+        return productRepository.findById(id)
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnError(e -> logger.error("Error fetching product id " + id, e))
+                                .switchIfEmpty(Mono.defer(() -> {
+                                    logger.warn("Product with id {} not found.", id);
+                                    return Mono.empty();
+                                }));
         
     }
 
     @CacheEvict(value = "products", key = "#product.id")
-    public Product createProduct(Product product) {
+    public Mono<Product> createProduct(Product product) {
         logger.info("Creating new product: {}", product.getName());
-        return productRepository.save(product);
+        return productRepository.save(product)
+                .publishOn(Schedulers.boundedElastic())
+                .doOnError(e -> logger.error("Error creating product: {}", e.getMessage(), e));
     }
     
     @CacheEvict(value = "products", key = "#id")
-    public Product updateProduct(Long id, Product productDetails) {
+    public Mono<Product> updateProduct(Long id, Product productDetails) {
         logger.info("Updating product with id: {}", id);
         return productRepository.findById(id)
-                .map(product -> {
+                .publishOn(Schedulers.boundedElastic())
+                .flatMap(product -> {
                     product.setName(productDetails.getName());
                     product.setDescription(productDetails.getDescription());
                     product.setPrice(productDetails.getPrice());
@@ -64,126 +80,140 @@ public class ProductService {
                     logger.info("Product with id {} updated successfully.", id);                    
                     return productRepository.save(product);                    
                 })
-                .orElseGet(() -> {
+                .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for update.", id);
-                    return null;
-                });
+                    return Mono.empty();
+                }))
+                .doOnError(e -> logger.error("Error updating oproduct: {}", e.getMessage(), e));
+    }
     }
     @CacheEvict(value = "products", key = "#id")
-    public boolean deleteProduct(Long id) {
-        logger.info("Deleting product with id: {}", id);
-        productRepository.findById(id)
-                .ifPresent( product -> {
-                    logger.info("Product with id {} found for deletion.", id);
-                    productRepository.delete(product);
-                    logger.info("Product with id {} deleted successfully.", id);                    
-                });
-        logger.warn("Product with id {} not found for deletion.", id);
-        return false;
-    }    
+    public Mono<Boolean> deleteProduct(Long id) {
+    logger.info("Deleting product with id: {}", id);
+
+    return productRepository.findById(id)
+            .publishOn(Schedulers.boundedElastic())
+            .flatMap(product -> {
+                logger.info("Product with id {} found for deletion.", id);
+                return productRepository.delete(product)
+                        .then(Mono.just(true));
+            })
+            .switchIfEmpty(Mono.defer(() -> {
+                logger.warn("Product with id {} not found for deletion.", id);
+                return Mono.just(false);
+            }));
+}
+
     @Cacheable(value = "products", key = "#category")
-    public List<Product> findByCategory(String category) {
+    public Flux<Product> findByCategory(String category) {
         logger.info("Fetching products by category: {}", category);
-        return productRepository.findByCategory(category);
+        return productRepository.findByCategory(category)
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnError(e -> logger.error("Error fetching products by category " + category, e));
     }
     @Cacheable(value = "products", key = "{#minPrice, #maxPrice}")
-    public List<Product> findByPriceBetween(Double minPrice, Double maxPrice) {
+    public Flux<Product> findByPriceBetween(Double minPrice, Double maxPrice) {
         logger.info("Fetching products with price between {} and {}", minPrice, maxPrice);
-        return productRepository.findByPriceBetween(minPrice, maxPrice);
+        return productRepository.findByPriceBetween(minPrice, maxPrice)
+                                .publishOn(Schedulers.boundedElastic())
+                                .doOnError(e -> logger.error("Error fetching products with price between " + minPrice + " and " + maxPrice, e));
     }
 
     @CacheEvict(value = "products", key = "#id")
-    public boolean buyProduct(Long id, int quantity) {
+    public Mono<Boolean> buyProduct(Long id, int quantity) {
         logger.info("Buying product with id: {} and quantity: {}", id, quantity);
         return productRepository.findById(id)
-                .map(product -> {
+                .publishOn(Schedulers.boundedElastic())
+                .flatMap(product -> {
                     if (product.getStockQuantity() >= quantity) {
                         product.decreaseStock(quantity);
                         productRepository.save(product);
                         logger.info("Product with id {} bought successfully.", id);
-                        return true;
+                        return Mono.just(true);
                     } else {
                         logger.warn("Insufficient stock for product with id {}.", id);
-                        return false;
+                        return Mono.just(false);
                     }
                 })
-                .orElseGet(() -> {
-                    logger.warn("Product with id {} not found for buying.", id);
-                    return false;
+                .switchIfEmpty(Mono.defer(() -> {
+                    logger.warn("Product with id {} not found for deletion.", id);
+                    return Mono.just(false);
                 });
     }
-    @CacheEvict(value = "products", key = "#product.id")
-    public String buyProducts(Order order) {
-        logger.info("Processing order for products with total price: {}", order.getTotalPrice());
-        
-        StringBuilder response = new StringBuilder();
-        List<OrderResult> results = new ArrayList<OrderResult>();
-        for(Long key : order.getProductsQuantity().keySet()) {
-            String lockKey = "lock:product:" + key;
-            RLock lock = redissonClient.getLock(lockKey);
+    
+    public Flux<OrderResult> buyProductsReactive(Order order) {
+    return Flux.fromIterable(order.getProductsQuantity().entrySet())
+        .flatMap(entry -> {
+            Long productId = entry.getKey();
+            Integer quantityRequested = entry.getValue();
 
-            try {
-                if (lock.tryLock(5, 10, TimeUnit.SECONDS)) {
-                    Product product = productRepository.findById(key).orElse(null);
-                    OrderResult result = new OrderResult();
-                    if (product != null) {                
-                        int quantity = order.getProductsQuantity().get(key);
-                        if (product.getStockQuantity() >= quantity) {
-                            product.decreaseStock(quantity);
-                            productRepository.save(product);                    
-                            result.setProduct(product);
-                            result.setSuccess(true);
-                            result.setResponse("Order successful for product: " + product.getName());
-                            results.add(result);
-                        } else {                    
-                            result.setProduct(product);
-                            result.setSuccess(false);
-                            result.setResponse("Insufficient stock for product: " + product.getName());
-                            results.add(result);
-                        }
-                    } else {                
+            String lockKey = "lock:product:" + productId;
+            RLockReactive lock = redissonClient.getLock(lockKey);
+
+            return lock.tryLock()
+                .flatMap(locked -> {
+                    if (!locked) {
+                        OrderResult result = new OrderResult();
+                        result.setProduct(new Product()); 
+                        result.getProduct().setId(productId);
                         result.setSuccess(false);
-                        result.setResponse("Product not found with id: " + key);
-                        results.add(result);
-                        result.setProduct(new Product());
-                        result.getProduct().setNotFound();
+                        result.setResponse("Could not acquire lock for product " + productId);
+                        return Mono.just(result);
                     }
-                    response.append("Product ID: ").append(result.getProduct().getId())
-                        .append(", Name: ").append(result.getProduct().getName())
-                        .append(", Quantity: ").append(order.getProductsQuantity().get(key))
-                        .append(", Status:").append(result.isSuccess() ? "Success" : "Failed")
-                        .append(", Reason: ").append(result.getResponse())
-                        .append("\n");
-                    } else {
-                    logger.warn("Could not acquire lock for processing product order.");
-                    response.append("Could not process order at this time. Please try again later.");
-                    }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
-            }
-        }     
-        logger.info("Order processed with results: {}", results);
-        return response.toString();   
-    }
+
+                    return productRepository.findById(productId)
+                        .defaultIfEmpty(new Product()) 
+                        .flatMap(product -> {
+                            OrderResult result = new OrderResult();
+                            if (product.getId() == null) {
+                                result.setProduct(new Product());
+                                result.getProduct().setNotFound();
+                                result.setSuccess(false);
+                                result.setResponse("Product not found with id: " + productId);
+                                return Mono.just(result);
+                            }
+
+                            if (product.getStockQuantity() >= quantityRequested) {
+                                product.decreaseStock(quantityRequested);
+                                return productRepository.save(product)
+                                        .map(saved -> {
+                                            result.setProduct(saved);
+                                            result.setSuccess(true);
+                                            result.setResponse("Order successful for product: " + saved.getName());
+                                            return result;
+                                        });
+                            } else {
+                                result.setProduct(product);
+                                result.setSuccess(false);
+                                result.setResponse("Insufficient stock for product: " + product.getName());
+                                return Mono.just(result);
+                            }
+                        })
+                        .flatMap(result ->
+                            lock.unlock()
+                                .thenReturn(result)
+                        );
+                });
+        });
+}
+
 
     @CacheEvict(value = "products", key = "#id")
-    public boolean increaseStock(Long id, int quantity) {
+    public Mono<Boolean> increaseStock(Long id, int quantity) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
         return productRepository.findById(id)
-                .map(product -> {
+                .publishOn(Schedulers.boundedElastic())
+                .flatMap(product -> {
                     product.increaseStock(quantity);
                     productRepository.save(product);
                     logger.info("Stock for product with id {} increased successfully.", id);
-                    return true;
+                    return Mono.just(true);
                 })
-                .orElseGet(() -> {
+                .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for stock increase.", id);
-                    return false;
-                });
+                    return Mono.just(false);
+                }))
+                .doOnError(e -> logger.error("Error increasing stock: {}", e.getMessage(), e));
     }
 
     @Scheduled(fixedRate = 10_000)

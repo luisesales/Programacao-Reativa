@@ -21,6 +21,10 @@ import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.service.ProductService;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import org.springframework.http.MediaType;
+
 @RestController
 @RequestMapping("/products")
 public class ProductController {
@@ -34,36 +38,34 @@ public class ProductController {
     private ProductService productService;
 
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
+    public Flux<Product> getAllProducts() {
         logger.info("Request received to get all products.");    
-        return ResponseEntity.ok(productService.getAllProducts());
+        return productService.getAllProducts();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+    @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Mono<Product> getProductById(@PathVariable Long id) {
         logger.info("Request received to get product with id: {}", id);
-        Optional<Product> product = productService.getProductById(id);
-        return product.map(ResponseEntity::ok)
-                      .orElseGet(() -> ResponseEntity.notFound().build());
+        return productService.getProductById(id);
     }
 
-    @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+    @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Mono<Product> createProduct(@RequestBody Product product) {
         logger.info("Request received to create new product: {}", product.getName());
-        Product createdProduct = productService.createProduct(product);
-        logger.info("Product created successfully: {}", createdProduct.getName());
-        return ResponseEntity.ok(createdProduct);                
+        Mono<Product> createdProduct = productService.createProduct(product);
+        createdProduct.subscribe(p -> 
+            logger.info("Product created successfully: {}", p.getName())
+        );
+        return createdProduct;                
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
+    @PutMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Mono<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
         logger.info("Request received to update product with id: {}", id);
-        return productService.getProductById(id)
-                .map(product -> {
-                    Product updatedProduct = productService.updateProduct(id, product);
-                    return ResponseEntity.ok(updatedProduct);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return productService.updateProduct(id, productDetails)
+                             .doOnSuccess(updatedProduct -> 
+                                 logger.info("Product with id {} updated successfully.", updatedProduct.getId())
+                             );
     }
 
     @DeleteMapping("/{id}")

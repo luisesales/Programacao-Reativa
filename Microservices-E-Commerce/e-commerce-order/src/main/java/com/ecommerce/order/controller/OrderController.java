@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.order.model.Order;
@@ -46,13 +46,6 @@ public class OrderController {
         return ResponseEntity.ok(orderResult);                
     }
 
-    // @PostMapping
-    // public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-    //     logger.info("Request received to create new order: {}", order.getId());
-    //     Order createdOrder = orderService.createOrder(order);
-    //     logger.info("Order created successfully: {}", createdOrder.getId());
-    //     return ResponseEntity.ok(createdOrder);                
-    // }
     // @PutMapping("/{id}")
     // public ResponseEntity<Order> updateOrder(@PathVariable Long id, @RequestBody Order orderDetails) {
     //     logger.info("Request received to update order with id: {}", id);

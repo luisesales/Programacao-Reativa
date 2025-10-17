@@ -15,6 +15,7 @@ import com.ecommerce.order.model.Product;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import reactor.core.publisher.Mono;
 
 @HttpExchange(url = "/products")
 public interface ProductHttpInterface{        
@@ -35,7 +36,7 @@ public interface ProductHttpInterface{
     @CircuitBreaker(name= "cbStockOrderProduct")
     @Retry(name= "rtStockOrderProduct")
     @Bulkhead(name= "bhStockOrderProduct") 
-    public ResponseEntity<String> orderProduct(@RequestBody Order order);
+    public Mono<String> orderProduct(@RequestBody Order order);
 
 
 }
