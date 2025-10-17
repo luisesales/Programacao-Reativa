@@ -1,8 +1,5 @@
 package com.ecommerce.stock.service;
 
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
 import org.redisson.api.RLockReactive;
 import org.redisson.api.RedissonReactiveClient;
 import org.slf4j.Logger;
@@ -86,23 +83,22 @@ public class ProductService {
                 }))
                 .doOnError(e -> logger.error("Error updating oproduct: {}", e.getMessage(), e));
     }
-    }
-    @CacheEvict(value = "products", key = "#id")
-    public Mono<Boolean> deleteProduct(Long id) {
-    logger.info("Deleting product with id: {}", id);
 
+    @CacheEvict(value = "products", key = "#id")
+    public Mono<String> deleteProduct(Long id) {
+    logger.info("Deleting product with id: {}", id);
     return productRepository.findById(id)
             .publishOn(Schedulers.boundedElastic())
             .flatMap(product -> {
                 logger.info("Product with id {} found for deletion.", id);
                 return productRepository.delete(product)
-                        .then(Mono.just(true));
+                        .then(Mono.just("Product with id {} found for deletion." + id));
             })
             .switchIfEmpty(Mono.defer(() -> {
                 logger.warn("Product with id {} not found for deletion.", id);
-                return Mono.just(false);
+                return Mono.just("Product id {} not found for deletion." + id);
             }));
-}
+    }
 
     @Cacheable(value = "products", key = "#category")
     public Flux<Product> findByCategory(String category) {
@@ -111,6 +107,7 @@ public class ProductService {
                                 .publishOn(Schedulers.boundedElastic())
                                 .doOnError(e -> logger.error("Error fetching products by category " + category, e));
     }
+
     @Cacheable(value = "products", key = "{#minPrice, #maxPrice}")
     public Flux<Product> findByPriceBetween(Double minPrice, Double maxPrice) {
         logger.info("Fetching products with price between {} and {}", minPrice, maxPrice);
@@ -138,10 +135,11 @@ public class ProductService {
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for deletion.", id);
                     return Mono.just(false);
-                });
+                }))
+                .doOnError(e -> logger.error("Error buying product: {}", e.getMessage(), e));
     }
     
-    public Flux<OrderResult> buyProductsReactive(Order order) {
+    public Flux<OrderResult> buyProducts(Order order) {
     return Flux.fromIterable(order.getProductsQuantity().entrySet())
         .flatMap(entry -> {
             Long productId = entry.getKey();
@@ -154,8 +152,7 @@ public class ProductService {
                 .flatMap(locked -> {
                     if (!locked) {
                         OrderResult result = new OrderResult();
-                        result.setProduct(new Product()); 
-                        result.getProduct().setId(productId);
+                        result.setProduct(new Product());                     
                         result.setSuccess(false);
                         result.setResponse("Could not acquire lock for product " + productId);
                         return Mono.just(result);
@@ -195,7 +192,7 @@ public class ProductService {
                         );
                 });
         });
-}
+    }
 
 
     @CacheEvict(value = "products", key = "#id")
@@ -220,5 +217,5 @@ public class ProductService {
     @CacheEvict(value="products", allEntries = true)
     public void clearCache() {
         System.out.println("Products Cache was cleared");
-    }
+    } 
 }

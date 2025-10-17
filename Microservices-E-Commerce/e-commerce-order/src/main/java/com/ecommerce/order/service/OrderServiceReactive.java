@@ -46,7 +46,7 @@ public class OrderServiceReactive {
 
         return productHttpInterface.orderProduct(order) 
             .publishOn(Schedulers.boundedElastic())
-            .flatMap(response -> {
+            .exchangeToMono(response -> {
                 if (response.getStatusCode().is2xxSuccessful()) {
                     return orderRepository.save(order)
                         .map(saved -> {

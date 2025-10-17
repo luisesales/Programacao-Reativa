@@ -16,6 +16,7 @@ import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 @HttpExchange(url = "/products")
 public interface ProductHttpInterface{        
@@ -24,13 +25,13 @@ public interface ProductHttpInterface{
     @CircuitBreaker(name= "cbStockGetAllProducts")
     @Retry(name= "rtStockGetAllProducts")
     @Bulkhead(name= "bhStockGetAllProducts")    
-    ResponseEntity<List<Product>> getAllProducts();
+    public Flux<Product> getAllProducts();
 
     @GetExchange("/{id}")
     @CircuitBreaker(name= "cbStockGetProductById")
     @Retry(name= "rtStockGetProductById")
     @Bulkhead(name= "bhStockGetProductById")  
-    public ResponseEntity<Product> getProductById(@PathVariable Long id); 
+    public Mono<Product> getProductById(@PathVariable Long id); 
 
     @PostExchange("/order")
     @CircuitBreaker(name= "cbStockOrderProduct")
