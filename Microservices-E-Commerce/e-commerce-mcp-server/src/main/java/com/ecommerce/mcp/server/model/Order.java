@@ -2,9 +2,9 @@ package com.ecommerce.mcp.server.model;
 
 import java.util.HashMap;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.data.annotation.Id;
 
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotBlank;
@@ -12,13 +12,11 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "orders")
 public class Order{
     @Id 
-    private String id = UUID.randomUUID().toString();
+    private String id;
     @NotBlank(message = "Name is mandatory")
     @Size(min = 5, message = "The name must have at least 5 characters")
     private String name;

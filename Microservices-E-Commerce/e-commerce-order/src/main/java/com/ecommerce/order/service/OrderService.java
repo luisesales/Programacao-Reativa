@@ -2,6 +2,7 @@ package com.ecommerce.order.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.order.exchange.ProductHttpInterface;
@@ -21,12 +22,16 @@ public class OrderService {
     
     private final OrderRepository orderRepository;
     private final ProductHttpInterface productHttpInterface;
+    private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
     public OrderService(OrderRepository orderRepository,
-                                ProductHttpInterface productHttpInterface) 
+                        ProductHttpInterface productHttpInterface,
+                        R2dbcEntityTemplate template
+                        ) 
                                 {
         this.orderRepository = orderRepository;
-        this.productHttpInterface = productHttpInterface;        
+        this.productHttpInterface = productHttpInterface;    
+        r2dbcEntityTemplate = template;    
     }
 
     public Flux<Order> getAllOrders() {
@@ -50,7 +55,7 @@ public class OrderService {
         .publishOn(Schedulers.boundedElastic())
         .flatMap(orderResult -> {
             if (orderResult.isSuccess()) {
-                return orderRepository.save(order)
+                return r2dbcEntityTemplate.insert(Order.class).using(order)
                     .doOnSuccess(savedOrder ->
                         logger.info("Order created successfully: {}", savedOrder.getId())
                     )

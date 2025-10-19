@@ -1,7 +1,5 @@
 package com.ecommerce.order.model;
 
-import java.util.UUID;
-
 import org.springframework.data.annotation.Id;
 
 import jakarta.persistence.Entity;
@@ -11,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 @Entity
 public class OrderResult{
     @Id    
-    private String id = UUID.randomUUID().toString();
+    private String id;
     private String response;
     private boolean success;
     @OneToOne

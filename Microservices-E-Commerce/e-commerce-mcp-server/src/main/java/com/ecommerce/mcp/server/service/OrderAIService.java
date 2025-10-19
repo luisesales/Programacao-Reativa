@@ -16,7 +16,7 @@ public class OrderAIService {
 
     private final OrderHttpInterface orderHttpInterface;;
 
-    public OrderAIService(OrderHttpInterface orderHttpInterface, 
+    public OrderAIService(OrderHttpInterface orderHttpInterface 
                           ) {
         this.orderHttpInterface = orderHttpInterface;
     }

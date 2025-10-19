@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
 @Entity
 public class OrderResult{
     @Id    
-    private String id = UUID.randomUUID().toString();
+    private String id;
     private String response;
     private boolean success;
     @OneToOne

@@ -15,18 +15,9 @@ import com.ecommerce.mcp.server.model.Product;
 public class ProductAIService {
 
     private final ProductHttpInterface productHttpInterface;
-    private final ProductHttpInterfaceFallback fallback;
 
-    // public ProductAIService(@Qualifier("productsHttpInterface") ProductHttpInterface productHttpInterface,
-    //                         @Qualifier("productHttpInterfaceFallback") ProductHttpInterfaceFallback fallback) {
-    //     this.productHttpInterface = productHttpInterface;
-    //     this.fallback = fallback;
-    // }
-
-    public ProductAIService(ProductHttpInterface productHttpInterface,
-                            ProductHttpInterfaceFallback fallback) {
-        this.productHttpInterface = productHttpInterface;
-        this.fallback = fallback;
+    public ProductAIService(ProductHttpInterface productHttpInterface) {
+        this.productHttpInterface = productHttpInterface;        
     }
 
     public List<Product> getAllProducts() {
