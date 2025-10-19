@@ -2,15 +2,15 @@ package com.ecommerce.stock.model;
 
 import java.util.UUID;
 
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Entity
+@Table(name = "product")
 public class Product {
     @Id
     private String id = UUID.randomUUID().toString();

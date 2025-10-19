@@ -62,7 +62,7 @@ public class OrderService {
                     .thenReturn(orderResult);
             } else {
                 logger.error("Failed to order products for order id: {}", order.getId());
-                return Mono.just(orderResult);
+                return Flux.just(orderResult);
             }
         })
         .onErrorResume(e -> {

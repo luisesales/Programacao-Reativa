@@ -1,19 +1,14 @@
 package com.ecommerce.order.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
-import jakarta.validation.constraints.NotNull;
-
-@Entity
 public class OrderResult{
     @Id    
     private String id;
     private String response;
     private boolean success;
-    @OneToOne
-    @NotNull(message = "Product is mandatory")
+    @Transient
     private Product product;
 
     public void setResponse(String response) {

@@ -2,12 +2,10 @@ package com.ecommerce.order.model;
 
 import org.springframework.data.annotation.Id;
 
-import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Entity
 public class Product {
     @Id
     private String id;

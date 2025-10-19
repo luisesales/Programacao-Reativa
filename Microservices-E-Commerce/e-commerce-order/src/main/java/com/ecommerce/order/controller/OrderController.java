@@ -44,7 +44,7 @@ public class OrderController {
                                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")));
     }
 
-    @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping
     public Flux<OrderResult> createOrder(@RequestBody Mono<Order> orderMono) {
         return orderMono
         .switchIfEmpty(Mono.error(new ResponseStatusException(
@@ -69,7 +69,9 @@ public class OrderController {
             OrderResult errorResult = new OrderResult();
             errorResult.setSuccess(false);
             errorResult.setResponse("Error creating order: " + e.getMessage());
-            return Flux.just(errorResult);            
+            return Flux.error(
+                new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error creating order: " + errorResult.getResponse(), e)
+            );                       
         });
     }
 }

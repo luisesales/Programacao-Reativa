@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 
 import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.OrderResult;
@@ -220,7 +220,7 @@ public class ProductService {
                 .doOnError(e -> logger.error("Error increasing stock: {}", e.getMessage(), e));
     }
 
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 15*60*1000)
     @CacheEvict(value="products", allEntries = true)
     public void clearCache() {
         System.out.println("Products Cache was cleared");
