@@ -1,11 +1,12 @@
 package com.ecommerce.mcp.server.model;
 
+import java.util.UUID;
+
+import org.springframework.data.annotation.Id;
+
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotNull;
-
-import java.util.UUID;
 
 @Entity
 public class OrderResult{

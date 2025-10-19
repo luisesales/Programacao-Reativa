@@ -1,7 +1,8 @@
 package com.ecommerce.stock.model;
 
+import org.springframework.data.annotation.Id;
+
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotNull;
 

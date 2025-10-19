@@ -3,9 +3,9 @@ package com.ecommerce.stock.model;
 import java.util.UUID;
 
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.annotation.Id;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,6 +27,7 @@ public class Product {
     private int stockQuantity;
     @NotBlank(message = "Category is mandatory")
     @Size(min = 5, max = 15, message = "The category must have at least 5 characters and maximum 15 characters")
+    
     private String category;
 
     public String getId() {
