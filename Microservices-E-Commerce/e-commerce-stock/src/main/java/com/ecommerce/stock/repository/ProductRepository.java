@@ -15,3 +15,4 @@ public interface ProductRepository extends R2dbcRepository<Product, String> {
     Mono<Product> save(Product product);    
     Flux<Product> findByPriceBetween(Double minPrice, Double maxPrice);
 }
+
