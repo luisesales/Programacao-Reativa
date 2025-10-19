@@ -37,19 +37,19 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Flux<Product> getAllProducts() {
         logger.info("Request received to get all products.");    
         return productService.getAllProducts();
     }
 
-    @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<Product> getProductById(@PathVariable String id) {
         logger.info("Request received to get product with id: {}", id);
         return productService.getProductById(id);
     }
 
-    @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<Product> createProduct(@RequestBody Mono<Product> monoProduct) {
         return monoProduct
             .switchIfEmpty(Mono.error(new ResponseStatusException(
@@ -69,7 +69,7 @@ public class ProductController {
         );        
     }
 
-    @PutMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<Product> updateProduct(@PathVariable String id, @RequestBody Mono<Product> monoProductDetails) {
         return monoProductDetails
             .switchIfEmpty(Mono.error(new ResponseStatusException(
@@ -89,7 +89,7 @@ public class ProductController {
              });
     }
 
-    @DeleteMapping(path = "/{id}" , produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @DeleteMapping(path = "/{id}" , produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> deleteProduct(@PathVariable String id) {
         logger.info("Request received to delete product with id: {}", id);
         return productService.deleteProduct(id)
@@ -101,7 +101,7 @@ public class ProductController {
                                 );
     }
 
-    @PostMapping(path = "/order", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(path = "/order", produces = MediaType.APPLICATION_JSON_VALUE)
     public Flux<OrderResult> orderProduct(@RequestBody Mono<Order> monoOrder) {
         return monoOrder
             .switchIfEmpty(Mono.error(new ResponseStatusException(
