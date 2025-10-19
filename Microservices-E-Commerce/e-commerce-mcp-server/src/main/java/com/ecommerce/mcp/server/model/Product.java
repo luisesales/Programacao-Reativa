@@ -1,8 +1,6 @@
 package com.ecommerce.mcp.server.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,8 +9,7 @@ import jakarta.validation.constraints.Size;
 @Entity
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
     @NotBlank(message = "Name is mandatory")
     @Size(min = 5, message = "The name must have at least 5 characters")    
     private String name;
@@ -27,7 +24,7 @@ public class Product {
     @Size(min = 5, max = 15, message = "The category must have at least 5 characters and maximum 15 characters")
     private String category;
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
     public String getName() {

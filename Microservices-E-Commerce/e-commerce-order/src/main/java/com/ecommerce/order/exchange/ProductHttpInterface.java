@@ -30,7 +30,7 @@ public interface ProductHttpInterface{
     @CircuitBreaker(name= "cbStockGetProductById")
     @Retry(name= "rtStockGetProductById")
     @Bulkhead(name= "bhStockGetProductById")  
-    public Mono<Product> getProductById(@PathVariable Long id); 
+    public Mono<Product> getProductById(@PathVariable String id); 
 
     @PostExchange("/order")
     @CircuitBreaker(name= "cbStockOrderProduct")

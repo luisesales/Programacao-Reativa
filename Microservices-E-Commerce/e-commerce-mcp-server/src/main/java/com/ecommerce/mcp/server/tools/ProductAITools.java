@@ -49,7 +49,7 @@ public class ProductAITools {
         description = "Fetches a product by its unique identifier"
     )
     public Optional<Product> getProductById(
-        @ToolParam(description = "It's a Long id") Long id
+        @ToolParam(description = "It's a String id") String id
     ) {
         return productAiService.getProductById(id);
     }

@@ -44,7 +44,7 @@ public class ProductController {
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<Product> getProductById(@PathVariable Long id) {
+    public Mono<Product> getProductById(@PathVariable String id) {
         logger.info("Request received to get product with id: {}", id);
         return productService.getProductById(id);
     }
@@ -70,7 +70,7 @@ public class ProductController {
     }
 
     @PutMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<Product> updateProduct(@PathVariable Long id, @RequestBody Mono<Product> monoProductDetails) {
+    public Mono<Product> updateProduct(@PathVariable String id, @RequestBody Mono<Product> monoProductDetails) {
         return monoProductDetails
             .switchIfEmpty(Mono.error(new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
@@ -90,7 +90,7 @@ public class ProductController {
     }
 
     @DeleteMapping(path = "/{id}" , produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<String> deleteProduct(@PathVariable Long id) {
+    public Mono<String> deleteProduct(@PathVariable String id) {
         logger.info("Request received to delete product with id: {}", id);
         return productService.deleteProduct(id)
                                 .doOnSuccess(message -> 

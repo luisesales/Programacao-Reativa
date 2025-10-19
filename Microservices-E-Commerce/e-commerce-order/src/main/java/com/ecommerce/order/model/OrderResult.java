@@ -1,17 +1,16 @@
 package com.ecommerce.order.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.UUID;
+
 @Entity
 public class OrderResult{
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Id    
+    private String id = UUID.randomUUID().toString();
     private String response;
     private boolean success;
     @OneToOne
@@ -36,7 +35,7 @@ public class OrderResult{
     public Product getProduct() {
         return product;
     }
-    public Long getId() {
+    public String getId() {
         return id;
     }
 } 

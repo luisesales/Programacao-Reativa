@@ -39,7 +39,7 @@ public class OrderController {
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<Order> getOrderById(@PathVariable Long id) {
+    public Mono<Order> getOrderById(@PathVariable String id) {
         return orderService.getOrderById(id)
                                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")));
     }

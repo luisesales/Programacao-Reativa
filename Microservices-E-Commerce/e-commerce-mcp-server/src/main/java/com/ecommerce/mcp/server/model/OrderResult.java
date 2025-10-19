@@ -1,4 +1,4 @@
-package com.ecommerce.stock.model;
+package com.ecommerce.mcp.server.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 public class OrderResult{
-    @Id
+    @Id    
     private String id = UUID.randomUUID().toString();
     private String response;
     private boolean success;
@@ -38,4 +38,4 @@ public class OrderResult{
     public String getId() {
         return id;
     }
-}
+} 

@@ -37,7 +37,7 @@ public class ProductAIService {
             return fallback.getAllProducts().getBody();
         }
     }
-    public Optional<Product> getProductById(Long id) {
+    public Optional<Product> getProductById(String id) {
         try {
             ResponseEntity<Product> response = productHttpInterface.getProductById(id);
             return Optional.ofNullable(response.getBody());

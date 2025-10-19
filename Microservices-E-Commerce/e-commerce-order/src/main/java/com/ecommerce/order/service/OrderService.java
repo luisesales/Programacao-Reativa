@@ -36,7 +36,7 @@ public class OrderService {
                               .doOnError(e -> logger.error("Error fetching all orders", e));
     }
 
-    public Mono<Order> getOrderById(Long id) {
+    public Mono<Order> getOrderById(String id) {
         logger.info("Fetching order with id: {}", id);
         return orderRepository.findById(id)
                               .publishOn(Schedulers.boundedElastic())
@@ -70,7 +70,7 @@ public class OrderService {
 
 
 
-    public Mono<Order> updateOrder(Long id, Order orderDetails) {
+    public Mono<Order> updateOrder(String id, Order orderDetails) {
         logger.info("Updating order with id: {}", id);
         return orderRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
@@ -88,7 +88,7 @@ public class OrderService {
                 .doOnError(e -> logger.error("Error updating order: {}", e.getMessage(), e));
     }
 
-    public Mono<Boolean> deleteOrder(Long id) {
+    public Mono<Boolean> deleteOrder(String id) {
         logger.info("Deleting order with id: {}", id);
         return orderRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())

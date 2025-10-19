@@ -9,11 +9,14 @@ import org.springframework.r2dbc.core.DatabaseClient;
 public class R2dbcSqlConfig {
     @Bean
     public ApplicationRunner init(DatabaseClient client) {
-        return args -> client.sql("""
-            CREATE TABLE IF NOT EXISTS orders (
-                id BIGINT PRIMARY KEY,
+         return args -> client.sql("""
+            CREATE TABLE IF NOT EXISTS product (
+                id VARCHAR(50) PRIMARY KEY,
                 name VARCHAR(255),
-                total_price DECIMAL
+                description VARCHAR(500),
+                price DECIMAL,
+                stock_quantity INT,
+                category VARCHAR(255)
             );
         """).fetch().rowsUpdated().subscribe();
     }

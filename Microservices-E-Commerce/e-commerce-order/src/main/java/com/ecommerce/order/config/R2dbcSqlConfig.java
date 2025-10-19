@@ -11,9 +11,10 @@ public class R2dbcSqlConfig {
     public ApplicationRunner init(DatabaseClient client) {
         return args -> client.sql("""
             CREATE TABLE IF NOT EXISTS orders (
-                id BIGINT PRIMARY KEY,
-                name VARCHAR(255),
-                total_price DECIMAL
+                id VARCHAR(36) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                products_quantity CLOB NOT NULL,
+                total_price DECIMAL NOT NULL
             );
         """).fetch().rowsUpdated().subscribe();
     }

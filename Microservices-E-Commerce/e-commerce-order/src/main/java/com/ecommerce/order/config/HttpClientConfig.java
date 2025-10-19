@@ -6,8 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.support.WebClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
-import com.ecommerce.order.exchange.ProductHttpInterface;
+
 import com.ecommerce.order.exchange.AiHttpInterface;
+import com.ecommerce.order.exchange.ProductHttpInterface;
 
 @Configuration
 public class HttpClientConfig {
@@ -17,7 +18,7 @@ public class HttpClientConfig {
                                                     @Value("http://localhost:8085/e-commerce-stock") String gatewayBaseUrl) {
 
         WebClient webClient = webClientBuilder
-                .baseUrl(gatewayBaseUrl)   // <<-- AQUI: gateway + prefix do serviço
+                .baseUrl(gatewayBaseUrl)   
                 .build();
 
         HttpServiceProxyFactory factory = HttpServiceProxyFactory
@@ -32,7 +33,7 @@ public class HttpClientConfig {
                                                     @Value("http://localhost:8085/e-commerce-mcp-client") String gatewayBaseUrl) {
 
         WebClient webClient = webClientBuilder
-                .baseUrl(gatewayBaseUrl)   // <<-- AQUI: gateway + prefix do serviço
+                .baseUrl(gatewayBaseUrl)   
                 .build();
 
         HttpServiceProxyFactory factory = HttpServiceProxyFactory

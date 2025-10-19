@@ -42,7 +42,7 @@ public class ProductService {
     }
     
     @Cacheable(value = "products", key = "#id")
-    public Mono<Product> getProductById(Long id) {
+    public Mono<Product> getProductById(String id) {
         logger.info("Fetching product with id: {}", id);
         return productRepository.findById(id)
                                 .publishOn(Schedulers.boundedElastic())
@@ -63,7 +63,7 @@ public class ProductService {
     }
     
     @CacheEvict(value = "products", key = "#id")
-    public Mono<Product> updateProduct(Long id, Product productDetails) {
+    public Mono<Product> updateProduct(String id, Product productDetails) {
         logger.info("Updating product with id: {}", id);
         return productRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
@@ -85,7 +85,7 @@ public class ProductService {
     }
 
     @CacheEvict(value = "products", key = "#id")
-    public Mono<String> deleteProduct(Long id) {
+    public Mono<String> deleteProduct(String id) {
     logger.info("Deleting product with id: {}", id);
     return productRepository.findById(id)
             .publishOn(Schedulers.boundedElastic())
@@ -117,7 +117,7 @@ public class ProductService {
     }
 
     @CacheEvict(value = "products", key = "#id")
-    public Mono<Boolean> buyProduct(Long id, int quantity) {
+    public Mono<Boolean> buyProduct(String id, int quantity) {
         logger.info("Buying product with id: {} and quantity: {}", id, quantity);
         return productRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
@@ -142,7 +142,7 @@ public class ProductService {
     public Flux<OrderResult> buyProducts(Order order) {
     return Flux.fromIterable(order.getProductsQuantity().entrySet())
         .flatMap(entry -> {
-            Long productId = entry.getKey();
+            String productId = entry.getKey();
             Integer quantityRequested = entry.getValue();
 
             String lockKey = "lock:product:" + productId;
@@ -196,7 +196,7 @@ public class ProductService {
 
 
     @CacheEvict(value = "products", key = "#id")
-    public Mono<Boolean> increaseStock(Long id, int quantity) {
+    public Mono<Boolean> increaseStock(String id, int quantity) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
         return productRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
