@@ -1,14 +1,16 @@
 package com.ecommerce.mcp.server.tools;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 import com.ecommerce.mcp.server.model.Order;
+import com.ecommerce.mcp.server.model.OrderResult;
 import com.ecommerce.mcp.server.service.OrderAIService;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 
 @Component
 public class OrderAITools {
@@ -23,7 +25,7 @@ public class OrderAITools {
         name = "createOrder",
         description = "Creates a new order given a name and a List of tuples containing the product id and a quantity for each tuple"
     )
-    public String createOrder(
+    public Flux<OrderResult> createOrder(
         @ToolParam(description = """
                                     The order to be placed with:
                                     productsQuantity a tuple List with the following variables in each component:
@@ -40,7 +42,7 @@ public class OrderAITools {
         name = "getAllOrders",
         description = "Retrieves all orders available in the inventory"
     )
-    public List<Order> getAllOrders(){
+    public Flux<Order> getAllOrders(){
         return orderAiService.getOrders();
     }
 
@@ -48,7 +50,7 @@ public class OrderAITools {
         name = "getOrderById",
            description = "Fetches a product by its unique identifier"
     )
-    public Optional<Order> getOrderById(
+    public Mono<Order> getOrderById(
         @ToolParam(description = "It's a String id") String id
     ) {
         return orderAiService.getOrder(id);

@@ -1,6 +1,5 @@
 package com.ecommerce.mcp.server.exchange;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.GetExchange;
@@ -8,6 +7,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
 import com.ecommerce.mcp.server.model.Order;
+import com.ecommerce.mcp.server.model.OrderResult;
 
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -35,5 +35,5 @@ public interface OrderHttpInterface {
     @CircuitBreaker(name= "cbOrderCreateOrder")
     @Retry(name= "rtOrderCreateOrder")
     @Bulkhead(name= "bhOrderCreateOrder") 
-    public Flux<OrderResult> createOrder(@RequestBody Order order);
+    public Flux<OrderResult> createOrder(@RequestBody Mono<Order> order);
 }

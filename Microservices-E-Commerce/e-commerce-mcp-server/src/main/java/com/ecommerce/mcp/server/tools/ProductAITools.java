@@ -1,7 +1,7 @@
 package com.ecommerce.mcp.server.tools;
 
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -23,7 +23,7 @@ public class ProductAITools {
         name = "createProduct",
         description = "Creates a new product given a name, description, and price and category"
     )
-    public Product createProduct(
+    public Mono<Product> createProduct(
         @ToolParam(description = """
                                     The product to be created with:
                                     name a String of up to 15 characters, 
@@ -41,14 +41,14 @@ public class ProductAITools {
         name = "getAllProducts",
         description = "Retrieves all products available in the inventory"
     )
-    public List<Product> getAllProducts() {
+    public Flux<Product> getAllProducts() {
         return productAiService.getAllProducts();
     }
     @Tool(
         name = "getProductById",
         description = "Fetches a product by its unique identifier"
     )
-    public Optional<Product> getProductById(
+    public Mono<Product> getProductById(
         @ToolParam(description = "It's a String id") String id
     ) {
         return productAiService.getProductById(id);

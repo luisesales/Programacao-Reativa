@@ -38,5 +38,9 @@ public interface ProductHttpInterface{
     @Bulkhead(name= "bhStockOrderProduct") 
     public Flux<OrderResult> orderProduct(@RequestBody Mono<Order> order);
 
-
+    @PostExchange
+    @CircuitBreaker(name= "cbStockCreateProduct")
+    @Retry(name= "rtStockCreateProduct")
+    @Bulkhead(name= "bhStockCreateProduct") 
+    public Mono<Product> createProduct(@RequestBody Mono<Product> product);
 }

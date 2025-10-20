@@ -1,13 +1,14 @@
 package com.ecommerce.mcp.server.service;
 
-import java.util.Flux;
-import java.util.Optional;
-
-import org.springframework.http.ResponseEntity;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.mcp.server.exchange.OrderHttpInterface;
 import com.ecommerce.mcp.server.model.Order;
+import com.ecommerce.mcp.server.model.OrderResult;
 
 
 
@@ -22,31 +23,20 @@ public class OrderAIService {
     }
 
     public Flux<Order> getOrders() {
-        try {
-             Flux<Order> response = orderHttpInterface.getAllOrders();
-             return response.getBody();
-        } catch (Exception e) {
-            return fallback.getAllOrders().getBody();
-        }
+        return orderHttpInterface.getAllOrders().onErrorResume(e -> {
+            return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Returning Orders", e));
+        });        
     }
 
-    public Optional<Order> getOrder(String orderId) {
-        try {
-            ResponseEntity<Order> response = orderHttpInterface.getOrderById(orderId);
-            return Optional.ofNullable(response.getBody());
-        } catch (Exception e) {
-            return Optional.ofNullable(fallback.getOrderById(orderId).getBody());
-        }
+    public Mono<Order> getOrder(String orderId) {
+        return orderHttpInterface.getOrderById(orderId).onErrorResume(e -> {
+            return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Returning Order with "+ orderId , e));
+        });
     }
 
-    public Flux<OrderResult> createOrder(Order order) {        
-        try {
-            Flux<OrderResult> response = orderHttpInterface.createOrder(order);
-            return response.getBody();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return fallback.createOrder(order).getBody();
-        }
+    public Flux<OrderResult> createOrder(Order order) {            
+        return orderHttpInterface.createOrder(Mono.just(order)).onErrorResume(e -> {
+            return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order " +  order.getName(), e));
+        });
     }
 }
-

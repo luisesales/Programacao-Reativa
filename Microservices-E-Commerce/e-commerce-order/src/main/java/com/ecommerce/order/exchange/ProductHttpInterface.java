@@ -37,6 +37,4 @@ public interface ProductHttpInterface{
     @Retry(name= "rtStockOrderProduct")
     @Bulkhead(name= "bhStockOrderProduct") 
     public Flux<OrderResult> orderProduct(@RequestBody Mono<Order> order);
-
-
 }

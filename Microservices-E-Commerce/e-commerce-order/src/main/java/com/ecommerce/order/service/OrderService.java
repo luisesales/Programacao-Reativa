@@ -51,7 +51,7 @@ public class OrderService {
     public Flux<OrderResult> createOrder(Order order) {
     logger.info("Creating new order reactive: {}", order.getId());
 
-    return productHttpInterface.orderProduct(Mono.just(order)) // Deve retornar Flux<OrderResult>
+    return productHttpInterface.orderProduct(Mono.just(order))
         .publishOn(Schedulers.boundedElastic())
         .flatMap(orderResult -> {
             if (orderResult.isSuccess()) {

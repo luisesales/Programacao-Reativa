@@ -162,6 +162,7 @@ public class ProductService {
                         result.setProduct(new Product());                     
                         result.setSuccess(false);
                         result.setResponse("Could not acquire lock for product " + productId);
+                        logger.warn("Could not acquire lock for product id: {}", productId);
                         return Mono.just(result);
                     }
 
@@ -174,6 +175,7 @@ public class ProductService {
                                 result.getProduct().setNotFound();
                                 result.setSuccess(false);
                                 result.setResponse("Product not found with id: " + productId);
+                                logger.warn("Product not found with id: {}", productId);
                                 return Mono.just(result);
                             }
 
@@ -184,12 +186,14 @@ public class ProductService {
                                             result.setProduct(saved);
                                             result.setSuccess(true);
                                             result.setResponse("Order successful for product: " + saved.getName());
+                                            logger.info("Order successful for product id: {}", productId);
                                             return result;
                                         });
                             } else {
                                 result.setProduct(product);
                                 result.setSuccess(false);
                                 result.setResponse("Insufficient stock for product: " + product.getName());
+                                logger.warn("Insufficient stock for product id: {}", productId);
                                 return Mono.just(result);
                             }
                         })
@@ -223,6 +227,7 @@ public class ProductService {
     @Scheduled(fixedRate = 15*60*1000)
     @CacheEvict(value="products", allEntries = true)
     public void clearCache() {
+        logger.info("Clearing products cache"); 
         System.out.println("Products Cache was cleared");
     } 
 }
