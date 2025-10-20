@@ -1,5 +1,7 @@
 package com.ecommerce.mcp.client.interfaces;
 
+import reactor.core.publisher.Flux;
+
 public interface ChatServiceAi {
-    String getAnswer(String question);
+    Flux<String> getAnswer(String question);
 }

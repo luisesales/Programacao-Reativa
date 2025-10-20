@@ -24,19 +24,19 @@ public class OrderAIService {
 
     public Flux<Order> getOrders() {
         return orderHttpInterface.getAllOrders().onErrorResume(e -> {
-            return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Returning Orders", e));
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Orders", e));
         });        
     }
 
     public Mono<Order> getOrder(String orderId) {
         return orderHttpInterface.getOrderById(orderId).onErrorResume(e -> {
-            return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Returning Order with "+ orderId , e));
+            return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Order with "+ orderId , e));
         });
     }
 
     public Flux<OrderResult> createOrder(Order order) {            
         return orderHttpInterface.createOrder(Mono.just(order)).onErrorResume(e -> {
-            return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order " +  order.getName(), e));
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Creating Order " +  order.getName(), e));
         });
     }
 }

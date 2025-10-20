@@ -14,6 +14,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+ 
+
 @Service
 public class OrderService {
 
@@ -106,9 +110,10 @@ public class OrderService {
                 )
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Order with id {} not found for deletion.", id);
-                    return Mono.just(false);
+                    return Mono.just(false)
+                                .flatMap(msg -> Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order with "+ id + " not found")));
                 }))                                             
-                .onErrorResume(ex -> Mono.just("Fallback: Product service unavailable, cannot delete order.")
+                .onErrorResume(ex -> Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Product service unavailable, cannot delete order with id"+ id))
                                          .flatMap(msg -> {
                                              logger.error(msg + " Error: {}", ex.getMessage(), ex);
                                              return Mono.just(false);

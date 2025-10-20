@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -23,18 +25,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.ecommerce.mcp.client.controller.ECommerceAIController;
 import com.ecommerce.mcp.client.interfaces.ChatServiceAi;
 import com.ecommerce.mcp.client.model.ECommerceAI;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class ECommerceAIService implements ChatServiceAi {
     private final ChatClient chatClient;
     private final ECommerceAI ecommerceAI;
-    // private RelevancyEvaluator evaluator;
+    
+
+    private static final Logger logger = LoggerFactory.getLogger(ECommerceAIController.class);
 
 
     @Value("${spring.ai.openai.api-key}")
@@ -61,63 +67,48 @@ public class ECommerceAIService implements ChatServiceAi {
     }
 
     @Override
-    public String getAnswer(String prompt) {
-        List<Document> relatedDocuments = ecommerceAI.findClosestMatches(prompt, 3);
-        if (relatedDocuments == null || relatedDocuments.isEmpty()) {
-               return "Desculpe, não encontrei informações relevantes para sua pergunta.";
-        }
+    public Flux<String> getAnswer(String prompt) {
+        return Mono.fromCallable(() -> ecommerceAI.findClosestMatches(prompt, 3))
+        .flatMapMany(documents -> {
+            if (documents == null || documents.isEmpty()) {
+                return Flux.just("Desculpe, não encontrei informações relevantes para sua pergunta.");
+            }
 
-        String context = relatedDocuments.stream()
-                            .map(Document::getText)
-                            .collect(Collectors.joining("\n---\n"));
+            String context = documents.stream()
+                .map(Document::getText)
+                .collect(Collectors.joining("\n---\n"));
 
-        String systemTemplate = readResourceToString(systemTemplateResource);
-        String userTemplate = readResourceToString(userTemplateResource);
+            String systemTemplate = readResourceToString(systemTemplateResource);
+            String userTemplate = readResourceToString(userTemplateResource);
 
-        if (systemTemplate.isEmpty() || userTemplate.isEmpty()) {
-            return "Erro interno: templates não encontrados.";
-        }
+            if (systemTemplate.isEmpty() || userTemplate.isEmpty()) {
+                return Flux.just("Erro interno: templates não encontrados.");
+            }
 
-        String answer = "";
-        try {
-            System.out.println("Sending prompt to AI model...");
-
-            Flux<String> flux = chatClient.prompt()
+            
+            return chatClient.prompt()
                 .system(systemSpec -> systemSpec
-                    .text(systemTemplate)                    
+                    .text(systemTemplate)
                     .param("Contexto", context))
                 .user(userSpec -> userSpec
                     .text(userTemplate)
                     .param("Pergunta", prompt))
                 .stream()
-                .content();
+                .content()
+                .switchIfEmpty(Flux.just("Desculpe, não consegui processar sua pergunta."))
+                .onErrorResume(e -> {
+                    System.out.println("Spring AI falhou. Fallback para WebClient:");
+                    e.printStackTrace();
 
-            answer = flux.collectList()
-                    .map(list -> String.join("", list))
-                    .block(); 
-
-            if (answer == null || answer.isEmpty()) {
-                return "Desculpe, não consegui processar sua pergunta.";
-            }
-
-            System.out.println("Resposta da IA:" + answer);
-                
-        } catch (Exception springAiException) {
-            System.out.println("Spring AI falhou. Fallback para WebClient. Erro:");
-            springAiException.printStackTrace();
-
-            answer = callOpenAiDirectly(systemTemplate, userTemplate, context, prompt);
-            if (answer == null) {
-                return "Desculpe, estou com problemas para me conectar ao serviço de IA no momento.";
-            }
-        }
-
-        chatMemory.add("default", new AssistantMessage(answer));
-
-        return answer;
+                    return callOpenAiDirectly(systemTemplate, userTemplate, context, prompt)
+                    .switchIfEmpty(Flux.just("Desculpe, estou com problemas para me conectar ao serviço de IA no momento."));
+                    
+                })
+                .doOnNext(answer -> chatMemory.add("default", new AssistantMessage(answer)));
+        });
     }
 
-    private String callOpenAiDirectly(String systemTemplate, String userTemplate, String context, String prompt) {
+    private Flux<String> callOpenAiDirectly(String systemTemplate, String userTemplate, String context, String prompt) {
         WebClient client = WebClient.builder()
                 .baseUrl("https://api.openai.com/v1/chat/completions")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + openAiApiKey)
@@ -140,7 +131,7 @@ public class ECommerceAIService implements ChatServiceAi {
             System.out.println("Resposta bruta da OpenAI:");
             System.out.println(response);
 
-            return extractContentFromJson(response);
+            return Flux.just(extractContentFromJson(response));
 
         } catch (Exception e) {
             System.out.println("Erro ao chamar diretamente a API da OpenAI:");
