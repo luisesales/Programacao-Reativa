@@ -3,19 +3,19 @@ package com.ecommerce.order.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.order.exchange.ProductHttpInterface;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderResult;
+import com.ecommerce.order.model.Product;
 import com.ecommerce.order.repository.OrderRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
  
 
 @Service
@@ -118,6 +118,14 @@ public class OrderService {
                                              logger.error(msg + " Error: {}", ex.getMessage(), ex);
                                              return Mono.just(false);
                                          }));
+    }
+
+    public Flux<Product> getProducts() {
+        logger.info("Fetching products from Product Service");
+        return productHttpInterface.getAllProducts().onErrorResume(e -> {
+            logger.error("Error Returning Products from Product Service: {}", e.getMessage(), e);
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
+        });   
     }
 } 
     

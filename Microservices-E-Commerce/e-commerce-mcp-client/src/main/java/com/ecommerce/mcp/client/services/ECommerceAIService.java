@@ -94,7 +94,7 @@ public class ECommerceAIService implements ChatServiceAi {
                     .text(userTemplate)
                     .param("Pergunta", prompt))
                 .stream()
-                .content()
+                .content()                
                 .switchIfEmpty(Flux.just("Desculpe, não consegui processar sua pergunta."))
                 .onErrorResume(e -> {
                     System.out.println("Spring AI falhou. Fallback para WebClient:");

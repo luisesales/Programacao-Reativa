@@ -13,12 +13,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.ecommerce.order.model.Product;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.service.OrderService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @RestController
@@ -43,6 +46,12 @@ public class OrderController {
         return orderService.getOrderById(id)
                                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")));
     }
+
+    @GetMapping(path = "/products", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<Product> getProducts() {
+        return orderService.getProducts();
+    }
+    
 
     @PostMapping
     public Flux<OrderResult> createOrder(@RequestBody Mono<Order> orderMono) {
