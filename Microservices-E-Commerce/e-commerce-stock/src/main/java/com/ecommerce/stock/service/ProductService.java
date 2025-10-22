@@ -186,7 +186,7 @@ public class ProductService {
                 });
     }
 
-    @Scheduled(fixedRate = 10_000)
+    @Scheduled(fixedRate = 15 * 60 * 1000) 
     @CacheEvict(value="products", allEntries = true)
     public void clearCache() {
         System.out.println("Products Cache was cleared");
