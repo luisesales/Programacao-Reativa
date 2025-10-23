@@ -14,6 +14,7 @@ import com.ecommerce.mcp.client.services.ECommerceAIService;
 
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 @RestController
 @RequestMapping("/chat")
@@ -31,7 +32,11 @@ public class ECommerceAIController {
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> chatService(@RequestParam("question") String prompt) {
         logger.info("Received chat request with prompt: '{}'", prompt);
-        return ecommerceAIService.getAnswer(prompt);
+        return ecommerceAIService.getAnswer(prompt)
+            .doOnError(e -> {
+                logger.error("Error processing chat request", e);
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error processing chat request: " + e.getMessage(), e);
+            });
     }
 
     public Flux<String> chatServiceRateFallback(Throwable t) {

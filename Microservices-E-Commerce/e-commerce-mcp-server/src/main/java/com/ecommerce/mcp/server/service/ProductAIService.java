@@ -11,6 +11,7 @@ import com.ecommerce.mcp.server.model.Product;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class ProductAIService {
@@ -22,23 +23,30 @@ public class ProductAIService {
     }
 
     public Flux<Product> getAllProducts() {
-        return productHttpInterface.getAllProducts().onErrorResume(e -> {
-            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
-        });   
+        System.out.println("Fetching all products");
+        return productHttpInterface.getAllProducts()        
+            .onErrorResume(e -> {
+                return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
+        }).subscribeOn(Schedulers.boundedElastic());   
     }
     public Mono<Product> getProductById(String productId) {
-        return productHttpInterface.getProductById(productId).onErrorResume(e -> {
-            return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Product with "+ productId + "Service is not available", e));
-        });
+        return productHttpInterface.getProductById(productId)            
+            .onErrorResume(e -> {
+                return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Product with "+ productId + "Service is not available", e));
+        }).subscribeOn(Schedulers.boundedElastic());
     }
     public Flux<OrderResult> orderProduct(Order order) {        
-        return productHttpInterface.orderProduct(Mono.just(order)).onErrorResume(e -> {
+        return productHttpInterface.orderProduct(Mono.just(order))
+            .publishOn(Schedulers.boundedElastic())
+            .onErrorResume(e -> {
             return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Ordering Products for order"+ order.getName() + "Service is not available", e));
-        });
+        }).subscribeOn(Schedulers.boundedElastic());
     }
     public Mono<Product> createProduct(Product product) {
-        return productHttpInterface.createProduct(Mono.just(product)).onErrorResume(e -> {
+        System.out.println("Creating product: " + product);
+        return productHttpInterface.createProduct(Mono.just(product))            
+            .onErrorResume(e -> {
             return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Creating Product "+ product.getName() + "Service is not available", e));
-        });
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 }

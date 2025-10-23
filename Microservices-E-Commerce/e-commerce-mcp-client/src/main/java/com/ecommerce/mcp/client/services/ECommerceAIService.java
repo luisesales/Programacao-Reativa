@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class ECommerceAIService implements ChatServiceAi {
@@ -82,10 +83,11 @@ public class ECommerceAIService implements ChatServiceAi {
             String userTemplate = readResourceToString(userTemplateResource);
 
             if (systemTemplate.isEmpty() || userTemplate.isEmpty()) {
+                logger.error("System or User template is empty.");
                 return Flux.just("Erro interno: templates não encontrados.");
             }
 
-            
+            logger.info("Context for prompt '{}': {}", prompt, context);
             return chatClient.prompt()
                 .system(systemSpec -> systemSpec
                     .text(systemTemplate)
@@ -99,12 +101,13 @@ public class ECommerceAIService implements ChatServiceAi {
                 .onErrorResume(e -> {
                     System.out.println("Spring AI falhou. Fallback para WebClient:");
                     e.printStackTrace();
-
+                    logger.error("Error during chatClient prompt processing", e);
                     return callOpenAiDirectly(systemTemplate, userTemplate, context, prompt)
                     .switchIfEmpty(Flux.just("Desculpe, estou com problemas para me conectar ao serviço de IA no momento."));
                     
                 })
-                .doOnNext(answer -> chatMemory.add("default", new AssistantMessage(answer)));
+                .doOnNext(answer -> chatMemory.add("default", new AssistantMessage(answer)))
+                .subscribeOn(Schedulers.boundedElastic());
         });
     }
 
@@ -123,18 +126,19 @@ public class ECommerceAIService implements ChatServiceAi {
                                     Map.of("role", "system", "content", fillTemplate(systemTemplate, context, prompt)),
                                     Map.of("role", "user", "content", fillTemplate(userTemplate, context, prompt))
                             )
-                    ))
+                    ))                    
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
 
             System.out.println("Resposta bruta da OpenAI:");
             System.out.println(response);
-
+            logger.info("Raw response from OpenAI: {}", response);
             return Flux.just(extractContentFromJson(response));
 
         } catch (Exception e) {
             System.out.println("Erro ao chamar diretamente a API da OpenAI:");
+            logger.error("Error calling OpenAI API directly", e);
             e.printStackTrace();
             return null;
         }
