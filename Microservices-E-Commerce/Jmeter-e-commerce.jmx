@@ -360,8 +360,19 @@
           </HeaderManager>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="AiChat">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-mcp-client/chat?question=&apos;Me mostre todos os produtos disponiveis&apos;</stringProp>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="AiChat CreateProduct" enabled="false">
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-mcp-client/chat?question=Crie um Produto com nome &apos;Teste&apos;  com a drescrição &apos;LOREM IPSUM&apos;, o preço R$ 20.00, a quantida em estoque de 3 e a categoria &apos;Teste&apos;</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="AiChat GetAllProducts">
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-mcp-client/chat?question=Me mostre os produtos disponíveis</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
