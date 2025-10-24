@@ -42,19 +42,33 @@ public class OrderService {
         logger.info("Fetching all orders (reactive)");
         return orderRepository.findAll()
                               .publishOn(Schedulers.boundedElastic())
-                              .doOnError(e -> logger.error("Error fetching all orders", e));
+                              .doOnError(e -> {
+                                logger.error("Error fetching all orders", e);
+                                Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching all orders" + e.getMessage(), e));
+                            });
     }
 
     public Mono<Order> getOrderById(String id) {
         logger.info("Fetching order with id: {}", id);
         return orderRepository.findById(id)
                               .publishOn(Schedulers.boundedElastic())
-                              .doOnError(e -> logger.error("Error fetching order id " + id, e));
+                              .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")))
+                              .doOnError(e -> {
+                                logger.error("Error fetching order id " + id, e);
+                                Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service is currently unavailable: " + e.getMessage(), e));
+                            });
     }
 
     public Flux<OrderResult> createOrder(Order order) {
     logger.info("Creating new order reactive: {}", order.getId());
-
+    if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
+        logger.warn("Order request is empty or invalid.");
+        return Flux.error(new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Invalid order request: missing products."
+        ));
+    }
+    logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
     return productHttpInterface.orderProduct(Mono.just(order))
         .publishOn(Schedulers.boundedElastic())
         .flatMap(orderResult -> {
@@ -92,9 +106,12 @@ public class OrderService {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Order with id {} not found for update.", id);
-                    return Mono.empty();
+                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order with "+ id + " not found"));
                 }))
-                .doOnError(e -> logger.error("Error updating order: {}", e.getMessage(), e));
+                .doOnError(e -> {
+                    logger.error("Error updating order: {}", e.getMessage(), e);
+                    Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service is currently unavailable: " + e.getMessage(), e));
+                });
     }
 
     public Mono<Boolean> deleteOrder(String id) {

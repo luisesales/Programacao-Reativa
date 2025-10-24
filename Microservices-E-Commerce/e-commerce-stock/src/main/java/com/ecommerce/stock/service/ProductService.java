@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.OrderResult;
@@ -66,7 +68,13 @@ public class ProductService {
         logger.info("Creating new product: {}", product.getName());
         return r2dbcEntityTemplate.insert(Product.class).using(product)
                 .publishOn(Schedulers.boundedElastic())
-                .doOnError(e -> logger.error("Error creating product: {}", e.getMessage(), e));
+                .doOnError(e -> {
+                    logger.error("Error creating product: {}", e.getMessage(), e);
+                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Product with message: " + e.getMessage(), e));
+                })
+                .doOnSuccess(createdProduct -> {
+                        logger.info("Product created successfully with id: {}", createdProduct.getId());
+                    });         
     }
     
     @CacheEvict(value = "products", key = "#id")
@@ -86,9 +94,12 @@ public class ProductService {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for update.", id);
-                    return Mono.empty();
+                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
-                .doOnError(e -> logger.error("Error updating oproduct: {}", e.getMessage(), e));
+                .doOnError(e -> {
+                    logger.error("Error updating product: {}", e.getMessage(), e);
+                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Updating Product with message: " + e.getMessage(), e));
+                });
     }
 
     @CacheEvict(value = "products", key = "#id")
@@ -104,7 +115,14 @@ public class ProductService {
             .switchIfEmpty(Mono.defer(() -> {
                 logger.warn("Product with id {} not found for deletion.", id);
                 return Mono.just("Product id {} not found for deletion." + id);
-            }));
+            }))
+            .doOnSuccess(message -> 
+                logger.info("Product with id {} deleted successfully.", id)
+            )
+            .doOnError(e -> 
+
+                logger.error("Error deleting product with id {}: {}", id, e.getMessage(), e)
+            );
     }
 
     @Cacheable(value = "products", key = "#category")
@@ -120,7 +138,10 @@ public class ProductService {
         logger.info("Fetching products with price between {} and {}", minPrice, maxPrice);
         return productRepository.findByPriceBetween(minPrice, maxPrice)
                                 .publishOn(Schedulers.boundedElastic())
-                                .doOnError(e -> logger.error("Error fetching products with price between " + minPrice + " and " + maxPrice, e));
+                                .doOnError(e -> {
+                                    logger.error("Error fetching products with price between " + minPrice + " and " + maxPrice, e);
+                                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products with price between " + minPrice + " and " + maxPrice + " : " + e.getMessage(), e));
+                                });
     }
 
     @CacheEvict(value = "products", key = "#id")
@@ -141,13 +162,25 @@ public class ProductService {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for deletion.", id);
-                    return Mono.just(false);
+                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
-                .doOnError(e -> logger.error("Error buying product: {}", e.getMessage(), e));
+                .doOnError(e -> {
+                    logger.error("Error buying product: {}", e.getMessage(), e);
+                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Buying Product with message: " + e.getMessage(), e));
+                });
     }
     
     public Flux<OrderResult> buyProducts(Order order) {
-    return Flux.fromIterable(order.getProductsQuantity().entrySet())
+        if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
+                    logger.warn("Order request is empty or invalid.");
+                    return Flux.error(new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid order request: missing products."
+                    ));
+                }
+
+                logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
+        return Flux.fromIterable(order.getProductsQuantity().entrySet())
         .flatMap(entry -> {
             String productId = entry.getKey();
             Integer quantityRequested = entry.getValue();
@@ -219,9 +252,12 @@ public class ProductService {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for stock increase.", id);
-                    return Mono.just(false);
+                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
-                .doOnError(e -> logger.error("Error increasing stock: {}", e.getMessage(), e));
+                .doOnError(e -> {
+                    logger.error("Error increasing stock: {}", e.getMessage(), e);
+                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Increasing Stock with message: " + e.getMessage(), e));
+                });
     }
 
     @Scheduled(fixedRate = 15*60*1000)

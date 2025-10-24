@@ -55,13 +55,8 @@ public class ProductController {
             )))
             .flatMap(product -> {
                 logger.info("Request received to create new product: {}", product.getName());
-                return productService.createProduct(product)
-                    .doOnSuccess(createdProduct -> {
-                        logger.info("Product created successfully with id: {}", createdProduct.getId());
-                    })         
-                    .doOnError(e -> 
-                        logger.error("Error creating product: {}", e.getMessage(), e)
-                    );
+                return productService.createProduct(product);
+                    
             }
         );        
     }
@@ -89,13 +84,8 @@ public class ProductController {
     @DeleteMapping(path = "/{id}" , produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> deleteProduct(@PathVariable String id) {
         logger.info("Request received to delete product with id: {}", id);
-        return productService.deleteProduct(id)
-                                .doOnSuccess(message -> 
-                                    logger.info("Product with id {} deleted successfully.", id)
-                                )
-                                .doOnError(e -> 
-                                    logger.error("Error deleting product with id {}: {}", id, e.getMessage(), e)
-                                );
+        return productService.deleteProduct(id);
+                                
     }
 
     @PostMapping(path = "/order", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -106,18 +96,7 @@ public class ProductController {
                 "Order body is missing"
             )))
             .flatMapMany(order -> {
-                logger.info("Request received to order products: {} with price: {}",
-                        order.getName(), order.getTotalPrice());
-
-                if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
-                    logger.warn("Order request is empty or invalid.");
-                    return Flux.error(new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid order request: missing products."
-                    ));
-                }
-
-                logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
+                logger.info("Request received to order products: {} with price: {}", order.getName(), order.getTotalPrice());                
                 return productService.buyProducts(order); 
             });
     }

@@ -20,10 +20,12 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.mcp.client.controller.ECommerceAIController;
 import com.ecommerce.mcp.client.interfaces.ChatServiceAi;
@@ -107,6 +109,10 @@ public class ECommerceAIService implements ChatServiceAi {
                     
                 })
                 .doOnNext(answer -> chatMemory.add("default", new AssistantMessage(answer)))
+                .doOnError(e -> {
+                    logger.error("Error processing chat request", e);
+                    throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error processing chat request: " + e.getMessage(), e);
+                })
                 .subscribeOn(Schedulers.boundedElastic());
         });
     }

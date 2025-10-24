@@ -13,14 +13,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.ecommerce.order.model.Product;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderResult;
+import com.ecommerce.order.model.Product;
 import com.ecommerce.order.service.OrderService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 
@@ -43,8 +42,8 @@ public class OrderController {
 
     @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Mono<Order> getOrderById(@PathVariable String id) {
-        return orderService.getOrderById(id)
-                                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")));
+        return orderService.getOrderById(id);
+                                
     }
 
     @GetMapping(path = "/products", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -61,16 +60,7 @@ public class OrderController {
                 "Order body is missing"
             )))
         .flatMapMany(order -> {
-            logger.info("Request received to order products: {} with price: {}",
-            order.getName(), order.getTotalPrice());
-            if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
-                    logger.warn("Order request is empty or invalid.");
-                    return Flux.error(new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid order request: missing products."
-                    ));
-            }
-            logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
+            logger.info("Request received to order products: {} with price: {}",order.getName(), order.getTotalPrice());            
             return orderService.createOrder(order);
         })
         .onErrorResume(e -> {
@@ -79,7 +69,7 @@ public class OrderController {
             errorResult.setSuccess(false);
             errorResult.setResponse("Error creating order: " + e.getMessage());
             return Flux.error(
-                new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error creating order: " + errorResult.getResponse(), e)
+                new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
             );                       
         });
     }
