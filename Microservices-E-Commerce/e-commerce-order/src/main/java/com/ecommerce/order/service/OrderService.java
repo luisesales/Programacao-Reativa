@@ -80,7 +80,13 @@ public class OrderService {
                     .thenReturn(orderResult);
             } else {
                 logger.error("Failed to order products for order id: {}", order.getId());
-                return Flux.just(orderResult);
+                return Flux.concat(
+                    Flux.just(orderResult),
+                    Flux.error(new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Failed to order products for order id: " + order.getId()
+                    ))
+                );
             }
         })
         .onErrorResume(e -> {
