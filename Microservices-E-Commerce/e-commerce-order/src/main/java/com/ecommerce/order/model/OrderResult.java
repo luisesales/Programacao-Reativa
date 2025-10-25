@@ -3,9 +3,11 @@ package com.ecommerce.order.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 
+import java.util.UUID;
+
 public class OrderResult{
     @Id    
-    private String id;
+    private UUID id;
     private String response;
     private boolean success;
     @Transient
@@ -29,7 +31,7 @@ public class OrderResult{
     public Product getProduct() {
         return product;
     }
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 } 

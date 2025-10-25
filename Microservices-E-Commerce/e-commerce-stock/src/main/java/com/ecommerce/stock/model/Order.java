@@ -10,24 +10,23 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 
 @Table(name = "orders")
 public class Order{
     @Id
-    private String id;
+    private UUID id;
     @NotBlank(message = "Name is mandatory")
     @Size(min = 5, message = "The name must have at least 5 characters")
     private String name;
     @NotEmpty(message = "Products Ordered are mandatory")
-    private HashMap<String ,Integer> productsQuantity;
+    private HashMap<UUID ,Integer> productsQuantity;
     @NotNull(message = "Total Price is mandatory")
     private double totalPrice;    
 
-    public String getId() {
+    public UUID getId() {
         return id;
-    }
-    public void setId(String id) {
-        this.id = id;
     }
     public String getName() {
         return name;
@@ -35,10 +34,10 @@ public class Order{
     public void setName(String name) {
         this.name = name;
     }
-    public HashMap<String, Integer> getProductsQuantity() {
+    public HashMap<UUID, Integer> getProductsQuantity() {
         return productsQuantity;
     }
-    public void setProductsQuantity(HashMap<String, Integer> productsQuantity) {
+    public void setProductsQuantity(HashMap<UUID, Integer> productsQuantity) {
         this.productsQuantity = productsQuantity;
     }
     public double getTotalPrice() {
@@ -47,13 +46,13 @@ public class Order{
     public void setTotalPrice(double totalPrice) {
         this.totalPrice = totalPrice;
     }
-    public void addProduct(String productId, Integer quantity) {
+    public void addProduct(UUID productId, Integer quantity) {
         if (this.productsQuantity == null) {
             this.productsQuantity = new HashMap<>();
         }
         this.productsQuantity.put(productId, quantity);
     }
-    public void removeProduct(String productId) {
+    public void removeProduct(UUID productId) {
         if (this.productsQuantity != null) {
             this.productsQuantity.remove(productId);
         }

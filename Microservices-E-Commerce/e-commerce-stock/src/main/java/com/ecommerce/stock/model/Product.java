@@ -13,7 +13,7 @@ import jakarta.validation.constraints.Size;
 @Table(name = "product")
 public class Product {
     @Id
-    private String id = UUID.randomUUID().toString();
+    private UUID id;
     @NotBlank(message = "Name is mandatory")
     @Size(min = 5, message = "The name must have at least 5 characters")    
     private String name;
@@ -24,13 +24,13 @@ public class Product {
     private double price;
     @NotNull(message = "Stock Quantity is mandatory")
     @Column("stock_quantity")
-    private int stockQuantity;
+    private Integer stockQuantity;
     @NotBlank(message = "Category is mandatory")
     @Size(min = 5, max = 15, message = "The category must have at least 5 characters and maximum 15 characters")
     
     private String category;
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
     public String getName() {
@@ -76,7 +76,7 @@ public class Product {
     }
 
     public void setNotFound() {
-        this.id = "-1";
+        this.id = null;
         this.name = "Product Not Found";
         this.description = "N/A";
         this.price = 0.0;

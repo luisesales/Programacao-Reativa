@@ -1,5 +1,7 @@
 package com.ecommerce.order.service;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -48,7 +50,7 @@ public class OrderService {
                             });
     }
 
-    public Mono<Order> getOrderById(String id) {
+    public Mono<Order> getOrderById(UUID id) {
         logger.info("Fetching order with id: {}", id);
         return orderRepository.findById(id)
                               .publishOn(Schedulers.boundedElastic())
@@ -99,7 +101,7 @@ public class OrderService {
 
 
 
-    public Mono<Order> updateOrder(String id, Order orderDetails) {
+    public Mono<Order> updateOrder(UUID id, Order orderDetails) {
         logger.info("Updating order with id: {}", id);
         return orderRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
@@ -120,7 +122,7 @@ public class OrderService {
                 });
     }
 
-    public Mono<Boolean> deleteOrder(String id) {
+    public Mono<Boolean> deleteOrder(UUID id) {
         logger.info("Deleting order with id: {}", id);
         return orderRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())

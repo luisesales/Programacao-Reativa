@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 
 public class Product {
     @Id
-    private String id;
+    private UUID id;
     @NotBlank(message = "Name is mandatory")
     @Size(min = 5, message = "The name must have at least 5 characters")    
     private String name;
@@ -23,7 +23,7 @@ public class Product {
     @Size(min = 5, max = 15, message = "The category must have at least 5 characters and maximum 15 characters")
     private String category;
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
     public String getName() {

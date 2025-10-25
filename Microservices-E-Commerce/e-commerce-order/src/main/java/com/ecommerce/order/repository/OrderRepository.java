@@ -6,7 +6,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 
-public interface OrderRepository extends R2dbcRepository<Order, String> {
+import java.util.UUID;
+
+public interface OrderRepository extends R2dbcRepository<Order, UUID> {
     Flux<Order> findAll();
-    Mono<Order> findById(String id);
+    Mono<Order> findById(UUID id);
 }

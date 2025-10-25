@@ -10,8 +10,9 @@ public class R2dbcSqlConfig {
     @Bean
     public ApplicationRunner init(DatabaseClient client) {
          return args -> client.sql("""
+            CREATE ALIAS IF NOT EXISTS uuid_generate_v4 FOR "java.util.UUID.randomUUID";
             CREATE TABLE IF NOT EXISTS product (
-                id VARCHAR(50) PRIMARY KEY,
+                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
                 name VARCHAR(255),
                 description VARCHAR(500),
                 price DECIMAL,

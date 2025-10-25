@@ -21,6 +21,8 @@ import com.ecommerce.order.service.OrderService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 
 
 @RestController
@@ -41,7 +43,7 @@ public class OrderController {
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<Order> getOrderById(@PathVariable String id) {
+    public Mono<Order> getOrderById(@PathVariable UUID id) {
         return orderService.getOrderById(id);
                                 
     }

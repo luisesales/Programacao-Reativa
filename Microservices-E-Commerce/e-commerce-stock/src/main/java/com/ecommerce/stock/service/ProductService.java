@@ -1,5 +1,8 @@
 package com.ecommerce.stock.service;
 
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.redisson.api.RLockReactive;
 import org.redisson.api.RedissonReactiveClient;
 import org.slf4j.Logger;
@@ -21,7 +24,6 @@ import com.ecommerce.stock.repository.ProductRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
 
 @Service
 public class ProductService {
@@ -51,7 +53,7 @@ public class ProductService {
     }
     
     @Cacheable(value = "products", key = "#id")
-    public Mono<Product> getProductById(String id) {
+    public Mono<Product> getProductById(UUID id) {
         logger.info("Fetching product with id: {}", id);
         return productRepository.findById(id)
                                 .publishOn(Schedulers.boundedElastic())
@@ -66,19 +68,19 @@ public class ProductService {
     @CacheEvict(value = "products", key = "#product.id")
     public Mono<Product> createProduct(Product product) {
         logger.info("Creating new product: {}", product.getName());
-        return r2dbcEntityTemplate.insert(Product.class).using(product)
-                .publishOn(Schedulers.boundedElastic())
+        return productRepository.save(product)                
                 .doOnError(e -> {
                     logger.error("Error creating product: {}", e.getMessage(), e);
                     Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Product with message: " + e.getMessage(), e));
                 })
                 .doOnSuccess(createdProduct -> {
                         logger.info("Product created successfully with id: {}", createdProduct.getId());
-                    });         
+                    })
+                .subscribeOn(Schedulers.boundedElastic());
     }
     
     @CacheEvict(value = "products", key = "#id")
-    public Mono<Product> updateProduct(String id, Product productDetails) {
+    public Mono<Product> updateProduct(UUID id, Product productDetails) {
         logger.info("Updating product with id: {}", id);
         return productRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
@@ -103,7 +105,7 @@ public class ProductService {
     }
 
     @CacheEvict(value = "products", key = "#id")
-    public Mono<String> deleteProduct(String id) {
+    public Mono<String> deleteProduct(UUID id) {
     logger.info("Deleting product with id: {}", id);
     return productRepository.findById(id)
             .publishOn(Schedulers.boundedElastic())
@@ -145,7 +147,7 @@ public class ProductService {
     }
 
     @CacheEvict(value = "products", key = "#id")
-    public Mono<Boolean> buyProduct(String id, int quantity) {
+    public Mono<Boolean> buyProduct(UUID id, int quantity) {
         logger.info("Buying product with id: {} and quantity: {}", id, quantity);
         return productRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
@@ -171,76 +173,72 @@ public class ProductService {
     }
     
     public Flux<OrderResult> buyProducts(Order order) {
-        if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
-                    logger.warn("Order request is empty or invalid.");
-                    return Flux.error(new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid order request: missing products."
-                    ));
-                }
+    if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
+        logger.warn("Order request is empty or invalid.");
+        return Flux.error(new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Invalid order request: missing products."
+        ));
+    }
 
-                logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
-        return Flux.fromIterable(order.getProductsQuantity().entrySet())
+    logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
+
+    return Flux.fromIterable(order.getProductsQuantity().entrySet())
         .flatMap(entry -> {
-            String productId = entry.getKey();
+            UUID productId = entry.getKey();
             Integer quantityRequested = entry.getValue();
-
             String lockKey = "lock:product:" + productId;
+
             RLockReactive lock = redissonClient.getLock(lockKey);
 
-            return lock.tryLock()
-                .flatMap(locked -> {
-                    if (!locked) {
-                        OrderResult result = new OrderResult();
-                        result.setProduct(new Product());                     
-                        result.setSuccess(false);
-                        result.setResponse("Could not acquire lock for product " + productId);
-                        logger.warn("Could not acquire lock for product id: {}", productId);
-                        return Mono.just(result);
-                    }
 
-                    return productRepository.findById(productId)
-                        .defaultIfEmpty(new Product()) 
-                        .flatMap(product -> {
-                            OrderResult result = new OrderResult();
-                            if (product.getId() == null) {
-                                result.setProduct(new Product());
-                                result.getProduct().setNotFound();
-                                result.setSuccess(false);
-                                result.setResponse("Product not found with id: " + productId);
-                                logger.warn("Product not found with id: {}", productId);
-                                return Mono.just(result);
-                            }
-
-                            if (product.getStockQuantity() >= quantityRequested) {
-                                product.decreaseStock(quantityRequested);
-                                return productRepository.save(product)
-                                        .map(saved -> {
-                                            result.setProduct(saved);
-                                            result.setSuccess(true);
-                                            result.setResponse("Order successful for product: " + saved.getName());
-                                            logger.info("Order successful for product id: {}", productId);
-                                            return result;
-                                        });
-                            } else {
-                                result.setProduct(product);
-                                result.setSuccess(false);
-                                result.setResponse("Insufficient stock for product: " + product.getName());
-                                logger.warn("Insufficient stock for product id: {}", productId);
-                                return Mono.just(result);
-                            }
-                        })
-                        .flatMap(result ->
-                            lock.unlock()
-                                .thenReturn(result)
-                        );
-                });
+            return Mono.usingWhen(
+                lock.tryLock(5, 30, TimeUnit.SECONDS)
+                    .filter(Boolean::booleanValue)
+                    .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Could not acquire lock for product id: " + productId
+                    ))),
+                locked -> processProduct(productId, quantityRequested),
+                locked -> lock.unlock()
+                    .doOnSuccess(v -> logger.info("Lock released for product {}", productId))
+                    .doOnError(e -> logger.warn("Failed to release lock for product {}: {}", productId, e.getMessage()))
+                    .onErrorResume(e -> Mono.empty())
+            )
+            .onErrorResume(e -> {
+                logger.error("Error processing product {}: {}", productId, e.getMessage());
+                Product errorProduct = new Product();
+                errorProduct.setNotFound();
+                return Mono.just(new OrderResult(false, "Error: " + e.getMessage(), errorProduct));
+            });
         });
+}
+
+    private Mono<OrderResult> processProduct(UUID productId, Integer quantityRequested) {
+        return productRepository.findById(productId)
+            .defaultIfEmpty(new Product())
+            .flatMap(product -> {
+                if (product.getId() == null) {
+                    product.setNotFound();
+                    return Mono.just(new OrderResult(false,
+                        "Product not found with id: " + productId, product));
+                }
+
+                if (product.getStockQuantity() >= quantityRequested) {
+                    product.decreaseStock(quantityRequested);
+                    return productRepository.save(product)
+                        .map(saved -> new OrderResult(true,
+                            "Order successful for product: " + saved.getName(), saved));
+                } else {
+                    return Mono.just(new OrderResult(false,
+                        "Insufficient stock for product: " + product.getName(), product));
+                }
+            });
     }
 
 
     @CacheEvict(value = "products", key = "#id")
-    public Mono<Boolean> increaseStock(String id, int quantity) {
+    public Mono<Boolean> increaseStock(UUID id, int quantity) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
         return productRepository.findById(id)
                 .publishOn(Schedulers.boundedElastic())
