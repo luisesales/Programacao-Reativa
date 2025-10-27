@@ -27,6 +27,15 @@ public class Product {
     private Integer stockQuantity;
     @NotBlank(message = "Category is mandatory")
     @Size(min = 5, max = 15, message = "The category must have at least 5 characters and maximum 15 characters")
+
+    public Product() {
+        this.id = null;
+        this.name = "N/A";
+        this.description = "N/A";
+        this.price = 0.0;
+        this.stockQuantity = 0; 
+        this.category = "N/A";
+    }
     
     private String category;
 

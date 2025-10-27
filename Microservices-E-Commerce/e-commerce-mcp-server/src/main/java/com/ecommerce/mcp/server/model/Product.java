@@ -1,5 +1,7 @@
 package com.ecommerce.mcp.server.model;
 
+import java.util.UUID;
+
 import org.springframework.data.annotation.Id;
 
 import jakarta.validation.constraints.NotBlank;

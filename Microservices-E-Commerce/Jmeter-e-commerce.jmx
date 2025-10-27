@@ -412,7 +412,7 @@
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
-          <intProp name="LoopController.loops">-1</intProp>
+          <stringProp name="LoopController.loops">2</stringProp>
           <boolProp name="LoopController.continue_forever">false</boolProp>
         </elementProp>
       </ThreadGroup>
@@ -622,8 +622,8 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetProductById" enabled="false">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/d15a354e-1511-4c73-a6eb-7a5de226cfa0</stringProp>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetProductById">
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/55d3d73a-a1ba-4a43-89b4-5ca8d226d7da</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -633,8 +633,19 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="DeleteProduct" enabled="false">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/11dbf5569-0cda-4b27-aa66-bf506f7349d3</stringProp>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetProductByCategory" enabled="false">
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/category?param=Tecnologia</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="DeleteProduct">
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/c26900fe-e22d-4a52-b176-ab902e1890cb</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">DELETE</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -645,7 +656,7 @@
         </HTTPSamplerProxy>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="UpdateProduct" enabled="false">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/1</stringProp>
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/21ff9d0f-7bb4-4b3a-a7eb-f8a4eb4df2eb</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">PUT</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -678,7 +689,7 @@
           </HeaderManager>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateProduct" enabled="false">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateProduct">
           <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
@@ -750,7 +761,7 @@
                 <stringProp name="Argument.value">{&#xd;
   &quot;name&quot;: &quot;Notebook Vision R15&quot;,&#xd;
   &quot;productsQuantity&quot;: {&#xd;
-  	&quot;e7ccef7c-58db-4d64-abae-5a48558f0609&quot; : 2&#xd;
+  	&quot;35ccb0eb-6382-469e-848d-f9506aa9cca3&quot; : 1&#xd;
   },&#xd;
   &quot;totalPrice&quot;: 7000.00&#xd;
 }&#xd;

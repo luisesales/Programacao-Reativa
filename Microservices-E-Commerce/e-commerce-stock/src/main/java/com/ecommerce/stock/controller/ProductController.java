@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,6 +25,7 @@ import com.ecommerce.stock.service.ProductService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 
 @RestController
 @RequestMapping("/products")
@@ -46,6 +48,13 @@ public class ProductController {
         logger.info("Request received to get product with id: {}", id);
         return productService.getProductById(id);
     }
+
+    @GetMapping(path = "/category", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<Product> getProductByCategory(@RequestParam String param) {
+        logger.info("Request received to get products in category: {}", param);
+        return productService.findByCategory(param);
+    }
+    
 
     @PostMapping
     public Mono<Product> createProduct(@RequestBody Mono<Product> monoProduct) {

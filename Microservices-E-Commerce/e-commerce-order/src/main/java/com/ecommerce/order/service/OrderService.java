@@ -79,7 +79,19 @@ public class OrderService {
                     .doOnSuccess(savedOrder ->
                         logger.info("Order created successfully: {}", savedOrder.getId())
                     )
-                    .thenReturn(orderResult);
+                    .thenReturn(orderResult)
+                    .doOnNext(result -> {
+                        logger.info("OrderResult returned successfully for order id: {}", order.getId());
+                        orderRepository.save(order)                
+                        .doOnError(e -> {
+                            logger.error("Error creating order: {}", e.getMessage(), e);
+                            Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
+                        })
+                        .doOnSuccess(createdOrder -> {
+                                logger.info("Order created successfully with id: {}", createdOrder.getId());
+                            })
+                        .subscribeOn(Schedulers.boundedElastic());
+                    });
             } else {
                 logger.error("Failed to order products for order id: {}", order.getId());
                 return Flux.concat(

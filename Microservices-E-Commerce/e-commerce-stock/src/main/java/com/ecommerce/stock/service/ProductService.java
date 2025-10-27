@@ -7,7 +7,6 @@ import org.redisson.api.RLockReactive;
 import org.redisson.api.RedissonReactiveClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -19,67 +18,77 @@ import org.springframework.web.server.ResponseStatusException;
 import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
+import com.ecommerce.stock.repository.ProductCacheRepository;
 import com.ecommerce.stock.repository.ProductRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
 @Service
 public class ProductService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private RedissonReactiveClient redissonClient;
-
+    private final ProductRepository productRepository;
+    private final RedissonReactiveClient redissonClient;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
+    private final ProductCacheRepository cache;
 
-    public ProductService(R2dbcEntityTemplate template) {
-        r2dbcEntityTemplate = template;
+    public ProductService(ProductRepository repo, 
+                          RedissonReactiveClient redissonClient, 
+                          ProductCacheRepository cache,
+                          R2dbcEntityTemplate template) {
+        this.productRepository = repo;
+        this.redissonClient = redissonClient;
+        this.cache = cache;
+        this.r2dbcEntityTemplate = template;
     }
 
     
 
-    @Cacheable(value = "products")
-    public Flux<Product> getAllProducts() {        
-        logger.info("Fetching all products");
-        return productRepository.findAll()
-                                .publishOn(Schedulers.boundedElastic())
-                                .doOnError(e -> logger.error("Error fetching all products", e));
+
+    public Flux<Product> getAllProducts() {
+        logger.info("Fetching all products (cache-first)");
+        return cache.findAll()
+            .switchIfEmpty(
+                productRepository.findAll()
+                    .collectList()
+                    .flatMap(products -> cache.saveAll(products).thenReturn(products))
+                    .flatMapMany(Flux::fromIterable)                    
+            )
+            .doOnError(e -> logger.error("Error fetching all products", e))
+            .subscribeOn(Schedulers.boundedElastic());
     }
     
-    @Cacheable(value = "products", key = "#id")
+
     public Mono<Product> getProductById(UUID id) {
         logger.info("Fetching product with id: {}", id);
-        return productRepository.findById(id)
-                                .publishOn(Schedulers.boundedElastic())
-                                .doOnError(e -> logger.error("Error fetching product id " + id, e))
-                                .switchIfEmpty(Mono.defer(() -> {
-                                    logger.warn("Product with id {} not found.", id);
-                                    return Mono.empty();
-                                }));
-        
+        return cache.findById(id)
+            .switchIfEmpty(
+                productRepository.findById(id)
+                    .flatMap(product -> cache.save(product).thenReturn(product))                
+                    .switchIfEmpty(Mono.defer(() -> {
+                        logger.warn("Product with id {} not found.", id);
+                        return Mono.empty();
+                                }))
+            )
+            .doOnError(e -> logger.error("Error fetching product {}", id, e))
+            .subscribeOn(Schedulers.boundedElastic());
     }
 
-    @CacheEvict(value = "products", key = "#product.id")
+
     public Mono<Product> createProduct(Product product) {
         logger.info("Creating new product: {}", product.getName());
-        return productRepository.save(product)                
-                .doOnError(e -> {
-                    logger.error("Error creating product: {}", e.getMessage(), e);
-                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Product with message: " + e.getMessage(), e));
-                })
-                .doOnSuccess(createdProduct -> {
-                        logger.info("Product created successfully with id: {}", createdProduct.getId());
-                    })
-                .subscribeOn(Schedulers.boundedElastic());
-    }
+        return productRepository.save(product)
+            .flatMap(saved -> cache.save(saved).thenReturn(saved))
+            .doOnSuccess(p -> logger.info("Product created successfully: {}", p.getId()))
+            .doOnError(e -> {
+                logger.error("Error creating product: {}", e.getMessage(), e);
+                Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Product with message: " + e.getMessage(), e));
+            })
+            .subscribeOn(Schedulers.boundedElastic());
+    }                        
     
-    @CacheEvict(value = "products", key = "#id")
     public Mono<Product> updateProduct(UUID id, Product productDetails) {
         logger.info("Updating product with id: {}", id);
         return productRepository.findById(id)
@@ -92,7 +101,8 @@ public class ProductService {
                     product.setCategory(productDetails.getCategory());
                     product.setStockQuantity(productDetails.getStockQuantity());
                     logger.info("Product with id {} updated successfully.", id);                    
-                    return productRepository.save(product);                    
+                    return productRepository.save(product)                    
+                        .flatMap(updated -> cache.save(updated).thenReturn(updated));
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for update.", id);
@@ -104,7 +114,6 @@ public class ProductService {
                 });
     }
 
-    @CacheEvict(value = "products", key = "#id")
     public Mono<String> deleteProduct(UUID id) {
     logger.info("Deleting product with id: {}", id);
     return productRepository.findById(id)
@@ -112,8 +121,9 @@ public class ProductService {
             .flatMap(product -> {
                 logger.info("Product with id {} found for deletion.", id);
                 return productRepository.delete(product)
-                        .then(Mono.just("Product with id {} found for deletion." + id));
-            })
+                    .then(cache.delete(id))
+                    .thenReturn("Product with id " + id + " deleted successfully.");
+            })                                        
             .switchIfEmpty(Mono.defer(() -> {
                 logger.warn("Product with id {} not found for deletion.", id);
                 return Mono.just("Product id {} not found for deletion." + id);
@@ -121,32 +131,44 @@ public class ProductService {
             .doOnSuccess(message -> 
                 logger.info("Product with id {} deleted successfully.", id)
             )
-            .doOnError(e -> 
-
-                logger.error("Error deleting product with id {}: {}", id, e.getMessage(), e)
-            );
+            .doOnError(e -> {
+                Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Deleting Product with message: " + e.getMessage(), e));
+                logger.error("Error deleting product with id {}: {}", id, e.getMessage(), e);
+            });
     }
 
-    @Cacheable(value = "products", key = "#category")
     public Flux<Product> findByCategory(String category) {
         logger.info("Fetching products by category: {}", category);
-        return productRepository.findByCategory(category)
-                                .publishOn(Schedulers.boundedElastic())
-                                .doOnError(e -> logger.error("Error fetching products by category " + category, e));
+         return cache.findByCategory(category)
+            .switchIfEmpty( 
+                productRepository.findByCategory(category)
+                                .collectList()
+                                .flatMap(products -> cache.saveByCategory(category, products).thenReturn(products))
+                                .flatMapMany(Flux::fromIterable)                                
+            )
+            .doOnError(e -> {
+                logger.error("Error fetching products by category " + category, e);
+                Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products by category " + category + " : " + e.getMessage(), e));
+            })
+            .subscribeOn(Schedulers.boundedElastic());
     }
 
-    @Cacheable(value = "products", key = "{#minPrice, #maxPrice}")
     public Flux<Product> findByPriceBetween(Double minPrice, Double maxPrice) {
         logger.info("Fetching products with price between {} and {}", minPrice, maxPrice);
-        return productRepository.findByPriceBetween(minPrice, maxPrice)
-                                .publishOn(Schedulers.boundedElastic())
-                                .doOnError(e -> {
-                                    logger.error("Error fetching products with price between " + minPrice + " and " + maxPrice, e);
-                                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products with price between " + minPrice + " and " + maxPrice + " : " + e.getMessage(), e));
-                                });
+        return cache.findByPriceRange(minPrice, maxPrice)
+            .switchIfEmpty(
+                productRepository.findByPriceBetween(minPrice, maxPrice)
+                    .collectList()
+                    .flatMap(products -> cache.saveByPriceRange(minPrice, maxPrice, products).thenReturn(products))
+                    .flatMapMany(Flux::fromIterable)                                    
+            )
+            .doOnError(e -> {
+                logger.error("Error fetching products with price between " + minPrice + " and " + maxPrice, e);
+                Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products with price between " + minPrice + " and " + maxPrice + " : " + e.getMessage(), e));
+            })
+            .subscribeOn(Schedulers.boundedElastic());
     }
 
-    @CacheEvict(value = "products", key = "#id")
     public Mono<Boolean> buyProduct(UUID id, int quantity) {
         logger.info("Buying product with id: {} and quantity: {}", id, quantity);
         return productRepository.findById(id)
@@ -184,26 +206,25 @@ public class ProductService {
     logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
 
     return Flux.fromIterable(order.getProductsQuantity().entrySet())
+        .publishOn(Schedulers.boundedElastic())
         .flatMap(entry -> {
             UUID productId = entry.getKey();
-            Integer quantityRequested = entry.getValue();
-            String lockKey = "lock:product:" + productId;
-
-            RLockReactive lock = redissonClient.getLock(lockKey);
-
-
+            Integer quantityRequested = entry.getValue();            
+            RLockReactive lock = redissonClient.getLock("lock:product:" + productId);
             return Mono.usingWhen(
                 lock.tryLock(5, 30, TimeUnit.SECONDS)
-                    .filter(Boolean::booleanValue)
-                    .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Could not acquire lock for product id: " + productId
-                    ))),
-                locked -> processProduct(productId, quantityRequested),
-                locked -> lock.unlock()
-                    .doOnSuccess(v -> logger.info("Lock released for product {}", productId))
-                    .doOnError(e -> logger.warn("Failed to release lock for product {}: {}", productId, e.getMessage()))
-                    .onErrorResume(e -> Mono.empty())
+                .filter(Boolean::booleanValue)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Could not acquire lock for product id: " + productId
+                    )))
+                .subscribeOn(Schedulers.parallel()),
+            locked -> processProduct(productId, quantityRequested)
+                .subscribeOn(Schedulers.parallel()),
+            locked -> lock.unlock()
+                .doOnSuccess(v -> logger.info("Lock released for product {}", productId))
+                .doOnError(e -> logger.warn("Failed to release lock for product {}: {}", productId, e.getMessage()))
+                .onErrorResume(e -> Mono.empty())
             )
             .onErrorResume(e -> {
                 logger.error("Error processing product {}: {}", productId, e.getMessage());
@@ -215,8 +236,12 @@ public class ProductService {
 }
 
     private Mono<OrderResult> processProduct(UUID productId, Integer quantityRequested) {
-        return productRepository.findById(productId)
-            .defaultIfEmpty(new Product())
+        return productRepository.findById(productId) 
+            // .switchIfEmpty(Mono.defer(() -> {
+            //     Product notFound = new Product();
+            //     notFound.setNotFound();
+            //     return Mono.just(notFound);
+            // }))           
             .flatMap(product -> {
                 if (product.getId() == null) {
                     product.setNotFound();
@@ -227,17 +252,16 @@ public class ProductService {
                 if (product.getStockQuantity() >= quantityRequested) {
                     product.decreaseStock(quantityRequested);
                     return productRepository.save(product)
-                        .map(saved -> new OrderResult(true,
-                            "Order successful for product: " + saved.getName(), saved));
+                        .flatMap(saved -> cache.save(saved).thenReturn(
+                            new OrderResult(true, "Order successful for product: " + saved.getName(), saved)));
                 } else {
                     return Mono.just(new OrderResult(false,
                         "Insufficient stock for product: " + product.getName(), product));
                 }
-            });
+            })
+            .switchIfEmpty(Mono.just(new OrderResult(false, "Product not found", new Product())));
     }
 
-
-    @CacheEvict(value = "products", key = "#id")
     public Mono<Boolean> increaseStock(UUID id, int quantity) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
         return productRepository.findById(id)
@@ -258,7 +282,7 @@ public class ProductService {
                 });
     }
 
-    @Scheduled(fixedRate = 15*60*1000)
+    @Scheduled(fixedRate = 1*60*1000)
     @CacheEvict(value="products", allEntries = true)
     public void clearCache() {
         logger.info("Clearing products cache"); 
