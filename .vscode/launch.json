@@ -47,7 +47,7 @@
             "request": "launch",
             "mainClass": "com.ecommerce.stock.ECommerceStockApplication",
             "projectName": "e-commerce-stock",
-            "vmArgs": "-Dspring.profiles.active=stock-server-1"
+            "vmArgs": "-Dspring.profiles.active=stock-server-reactive-1"
         },
         {
             "type": "java",
@@ -55,7 +55,7 @@
             "request": "launch",
             "mainClass": "com.ecommerce.stock.ECommerceStockApplication",
             "projectName": "e-commerce-stock",
-            "vmArgs": "-Dspring.profiles.active=stock-server-2"
+            "vmArgs": "-Dspring.profiles.active=stock-server-reactive-2"
         },
         {
             "type": "java",
@@ -63,7 +63,7 @@
             "request": "launch",
             "mainClass": "com.ecommerce.order.ECommerceOrderApplication",
             "projectName": "e-commerce-order",
-            "vmArgs": "-Dspring.profiles.active=order-server-1"
+            "vmArgs": "-Dspring.profiles.active=order-server-reactive-1"
         },
         {
             "type": "java",
@@ -71,7 +71,7 @@
             "request": "launch",
             "mainClass": "com.ecommerce.order.ECommerceOrderApplication",
             "projectName": "e-commerce-order",
-            "vmArgs": "-Dspring.profiles.active=order-server-2"
+            "vmArgs": "-Dspring.profiles.active=order-server-reactive-2"
         },
         {
             "type": "java",

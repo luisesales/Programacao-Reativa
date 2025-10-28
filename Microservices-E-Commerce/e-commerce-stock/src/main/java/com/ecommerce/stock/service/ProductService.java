@@ -1,14 +1,11 @@
 package com.ecommerce.stock.service;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
-import org.redisson.api.RLockReactive;
 import org.redisson.api.RedissonReactiveClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -193,7 +190,7 @@ public class ProductService {
                     Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Buying Product with message: " + e.getMessage(), e));
                 });
     }
-    
+
     public Flux<OrderResult> buyProducts(Order order) {
     if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
         logger.warn("Order request is empty or invalid.");
@@ -203,63 +200,34 @@ public class ProductService {
         ));
     }
 
-    logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
-
     return Flux.fromIterable(order.getProductsQuantity().entrySet())
-        .publishOn(Schedulers.boundedElastic())
         .flatMap(entry -> {
             UUID productId = entry.getKey();
-            Integer quantityRequested = entry.getValue();            
-            RLockReactive lock = redissonClient.getLock("lock:product:" + productId);
-            return Mono.usingWhen(
-                lock.tryLock(5, 30, TimeUnit.SECONDS)
-                .filter(Boolean::booleanValue)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "Could not acquire lock for product id: " + productId
-                    )))
-                .subscribeOn(Schedulers.parallel()),
-            locked -> processProduct(productId, quantityRequested)
-                .subscribeOn(Schedulers.parallel()),
-            locked -> lock.unlock()
-                .doOnSuccess(v -> logger.info("Lock released for product {}", productId))
-                .doOnError(e -> logger.warn("Failed to release lock for product {}: {}", productId, e.getMessage()))
-                .onErrorResume(e -> Mono.empty())
-            )
-            .onErrorResume(e -> {
-                logger.error("Error processing product {}: {}", productId, e.getMessage());
-                Product errorProduct = new Product();
-                errorProduct.setNotFound();
-                return Mono.just(new OrderResult(false, "Error: " + e.getMessage(), errorProduct));
-            });
-        });
-}
+            Integer quantityRequested = entry.getValue();
 
-    private Mono<OrderResult> processProduct(UUID productId, Integer quantityRequested) {
-        return productRepository.findById(productId) 
-            // .switchIfEmpty(Mono.defer(() -> {
-            //     Product notFound = new Product();
-            //     notFound.setNotFound();
-            //     return Mono.just(notFound);
-            // }))           
-            .flatMap(product -> {
-                if (product.getId() == null) {
-                    product.setNotFound();
+            return productRepository.tryDecreaseStock(productId, quantityRequested)
+                .flatMap(updated -> cache.save(updated)
+                    .thenReturn(new OrderResult(true,
+                        "Order successful for product: " + updated.getName(),
+                        updated))
+                )
+                .switchIfEmpty(
+                    productRepository.findById(productId)
+                        .map(existing -> new OrderResult(false,
+                            "Insufficient stock for product: " + existing.getName(),
+                            existing))
+                        .switchIfEmpty(Mono.just(new OrderResult(false,
+                            "Product not found with id: " + productId, new Product())))
+                )
+                .onErrorResume(e -> {
+                    logger.error("Error processing product {}: {}", productId, e.getMessage());
+                    Product errorProduct = new Product();
+                    errorProduct.setNotFound();
                     return Mono.just(new OrderResult(false,
-                        "Product not found with id: " + productId, product));
-                }
-
-                if (product.getStockQuantity() >= quantityRequested) {
-                    product.decreaseStock(quantityRequested);
-                    return productRepository.save(product)
-                        .flatMap(saved -> cache.save(saved).thenReturn(
-                            new OrderResult(true, "Order successful for product: " + saved.getName(), saved)));
-                } else {
-                    return Mono.just(new OrderResult(false,
-                        "Insufficient stock for product: " + product.getName(), product));
-                }
-            })
-            .switchIfEmpty(Mono.just(new OrderResult(false, "Product not found", new Product())));
+                        "Error: " + e.getMessage(), errorProduct));
+                });
+        })
+        .subscribeOn(Schedulers.boundedElastic());
     }
 
     public Mono<Boolean> increaseStock(UUID id, int quantity) {
@@ -282,7 +250,7 @@ public class ProductService {
                 });
     }
 
-    @Scheduled(fixedRate = 1*60*1000)
+    @Scheduled(fixedRate = 15*60*1000)
     @CacheEvict(value="products", allEntries = true)
     public void clearCache() {
         logger.info("Clearing products cache"); 

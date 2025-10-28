@@ -10,7 +10,7 @@ public class R2dbcSqlConfig {
     @Bean
     public ApplicationRunner init(DatabaseClient client) {
         return args -> client.sql("""
-            CREATE ALIAS IF NOT EXISTS uuid_generate_v4 FOR "java.util.UUID.randomUUID";
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";            
             CREATE TABLE IF NOT EXISTS orders (
                 id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -20,3 +20,4 @@ public class R2dbcSqlConfig {
         """).fetch().rowsUpdated().subscribe();
     }
 }
+//CREATE ALIAS IF NOT EXISTS uuid_generate_v4 FOR "java.util.UUID.randomUUID";
