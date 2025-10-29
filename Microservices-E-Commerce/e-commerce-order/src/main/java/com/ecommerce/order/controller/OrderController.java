@@ -19,6 +19,7 @@ import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.model.Product;
 import com.ecommerce.order.service.OrderService;
+import com.ecommerce.order.model.dto.OrderDTO;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,7 +44,7 @@ public class OrderController {
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<Order> getOrderById(@PathVariable UUID id) {
+    public Mono<OrderDTO> getOrderById(@PathVariable UUID id) {
         return orderService.getOrderById(id);
                                 
     }

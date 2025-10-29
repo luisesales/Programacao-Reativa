@@ -13,6 +13,7 @@ import com.ecommerce.order.exchange.ProductHttpInterface;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.model.Product;
+import com.ecommerce.order.model.dto.OrderDTO;
 import com.ecommerce.order.repository.OrderRepository;
 
 import reactor.core.publisher.Flux;
@@ -49,17 +50,23 @@ public class OrderService {
                                 Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching all orders" + e.getMessage(), e));
                             });
     }
-
-    public Mono<Order> getOrderById(UUID id) {
+    public Mono<OrderDTO> getOrderById(UUID id) {
         logger.info("Fetching order with id: {}", id);
         return orderRepository.findById(id)
-                              .publishOn(Schedulers.boundedElastic())
-                              .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")))
+            .map(order -> new OrderDTO(order.getId(),order.getName(), order.getProductsQuantity(), order.getTotalPrice()))
+            .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")))
                               .doOnError(e -> {
                                 logger.error("Error fetching order id " + id, e);
                                 Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service is currently unavailable: " + e.getMessage(), e));
-                            });
-    }
+            }).subscribeOn(Schedulers.boundedElastic());
+}
+
+    // public Mono<Order> getOrderById(UUID id) {
+        
+    //     return orderRepository.findById(id)
+    //                           .publishOn(Schedulers.boundedElastic())
+                             
+    // }
 
     public Flux<OrderResult> createOrder(Order order) {
     logger.info("Creating new order reactive: {}", order.getId());
