@@ -25,7 +25,14 @@ public class Order{
 
     @NotNull(message = "Total Price is mandatory")
     @Column("total_price")
-    private double totalPrice;    
+    private double totalPrice;   
+    
+    public Order() {
+        this.id = null;
+        this.name = "N/A";
+        this.productsQuantity = new HashMap<>();
+        this.totalPrice = 0.0;
+    }
 
     public UUID getId() {
         return id;

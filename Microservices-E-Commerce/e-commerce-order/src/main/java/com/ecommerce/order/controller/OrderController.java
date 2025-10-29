@@ -1,5 +1,7 @@
 package com.ecommerce.order.controller;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +22,6 @@ import com.ecommerce.order.service.OrderService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.UUID;
 
 
 
@@ -64,15 +64,6 @@ public class OrderController {
         .flatMapMany(order -> {
             logger.info("Request received to order products: {} with price: {}",order.getName(), order.getTotalPrice());            
             return orderService.createOrder(order);
-        })
-        .onErrorResume(e -> {
-            logger.error("Error creating order: {}", e.getMessage());
-            OrderResult errorResult = new OrderResult();
-            errorResult.setSuccess(false);
-            errorResult.setResponse("Error creating order: " + e.getMessage());
-            return Flux.error(
-                new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
-            );                       
-        });
+        });        
     }
 }

@@ -1,6 +1,7 @@
 package com.ecommerce.mcp.server.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,6 +15,7 @@ import com.ecommerce.mcp.server.exchange.ProductHttpInterface;
 @Configuration
 public class HttpClientConfig {
     @Bean
+    @LoadBalanced
     public ProductHttpInterface productHttpInterface(WebClient.Builder webClientBuilder,
                                                     @Value("http://localhost:8085/e-commerce-stock") String gatewayBaseUrl) {
 
@@ -29,6 +31,7 @@ public class HttpClientConfig {
     }
 
     @Bean
+    @LoadBalanced
     public OrderHttpInterface orderHttpInterface(WebClient.Builder webClientBuilder,
                                                     @Value("http://localhost:8085/e-commerce-order") String gatewayBaseUrl) {
 

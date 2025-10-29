@@ -1,9 +1,9 @@
 package com.ecommerce.order.model;
 
+import java.util.UUID;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
-
-import java.util.UUID;
 
 public class OrderResult{
     @Id    
@@ -12,6 +12,12 @@ public class OrderResult{
     private boolean success;
     @Transient
     private Product product;
+
+    public OrderResult(boolean success, String response, Product product) {
+        this.success = success;
+        this.response = response;
+        this.product = product;
+    }
 
     public void setResponse(String response) {
         this.response = response;

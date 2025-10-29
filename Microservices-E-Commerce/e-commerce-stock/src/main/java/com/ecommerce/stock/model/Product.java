@@ -27,6 +27,7 @@ public class Product {
     private Integer stockQuantity;
     @NotBlank(message = "Category is mandatory")
     @Size(min = 5, max = 15, message = "The category must have at least 5 characters and maximum 15 characters")
+    private String category;
 
     public Product() {
         this.id = null;
@@ -37,7 +38,7 @@ public class Product {
         this.category = "N/A";
     }
     
-    private String category;
+    
 
     public UUID getId() {
         return id;

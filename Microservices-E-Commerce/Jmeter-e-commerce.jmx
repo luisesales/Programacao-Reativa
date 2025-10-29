@@ -645,7 +645,7 @@
         </HTTPSamplerProxy>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="DeleteProduct" enabled="false">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/c26900fe-e22d-4a52-b176-ab902e1890cb</stringProp>
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/fc4041ee-750a-46e9-8389-c9796e17ffe9</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">DELETE</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -761,7 +761,7 @@
                 <stringProp name="Argument.value">{&#xd;
   &quot;name&quot;: &quot;Notebook Vision R15&quot;,&#xd;
   &quot;productsQuantity&quot;: {&#xd;
-  	&quot;bc436021-33f6-4f00-bba7-520f44dc7fb5&quot; : 1&#xd;
+  	&quot;f947d18c-8e9e-4e64-a34f-c59ca6a2f19f&quot; : 1&#xd;
   },&#xd;
   &quot;totalPrice&quot;: 7000.00&#xd;
 }&#xd;

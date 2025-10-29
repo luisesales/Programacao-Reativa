@@ -104,10 +104,11 @@ public class OrderService {
             }
         })
         .onErrorResume(e -> {
-            logger.error("Error creating order: {}", e.getMessage(), e);
-            return Flux.error(new RuntimeException(
-                "Error creating order: " + e.getMessage()
-            ));
+            logger.error("Error creating order: {}", e.getMessage());
+            OrderResult errorResult = new OrderResult(false, "Error creating order: " + e.getMessage(), new Product());            
+            return Flux.error(
+                new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
+            );                       
         });
 }
 
