@@ -70,12 +70,16 @@ public class ECommerceAIService implements ChatServiceAi {
         String context = relatedDocuments.stream()
                             .map(Document::getText)
                             .collect(Collectors.joining("\n---\n"));
+        
+
+        String defineContext = context.trim().isEmpty() ? "Nenhum contexto adicional disponível." : context; 
 
         String systemTemplate = readResourceToString(systemTemplateResource);
         String userTemplate = readResourceToString(userTemplateResource);
 
-        if (systemTemplate.isEmpty() || userTemplate.isEmpty()) {
-            return "Erro interno: templates não encontrados.";
+        if (systemTemplate == null || systemTemplate.trim().isEmpty()
+        || userTemplate == null || userTemplate.trim().isEmpty()) {
+            return "Erro interno: templates vazios ou não encontrados.";
         }
 
         String answer = "";
@@ -85,7 +89,7 @@ public class ECommerceAIService implements ChatServiceAi {
             Flux<String> flux = chatClient.prompt()
                 .system(systemSpec -> systemSpec
                     .text(systemTemplate)                    
-                    .param("Contexto", context))
+                    .param("Contexto", defineContext))
                 .user(userSpec -> userSpec
                     .text(userTemplate)
                     .param("Pergunta", prompt))
@@ -95,6 +99,8 @@ public class ECommerceAIService implements ChatServiceAi {
             answer = flux.collectList()
                     .map(list -> String.join("", list))
                     .block(); 
+
+            
 
             if (answer == null || answer.isEmpty()) {
                 return "Desculpe, não consegui processar sua pergunta.";
