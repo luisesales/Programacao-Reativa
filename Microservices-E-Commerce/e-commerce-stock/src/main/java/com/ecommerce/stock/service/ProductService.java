@@ -112,7 +112,7 @@ public class ProductService {
                     return false;
                 });
     }
-    @CacheEvict(value = "products", key = "#product.id")
+    @CacheEvict(value = "products", key = "#product.id", condition = "#product != null and #product.id != null")
     public String buyProducts(Order order) {
         logger.info("Processing order for products with total price: {}", order.getTotalPrice());
         

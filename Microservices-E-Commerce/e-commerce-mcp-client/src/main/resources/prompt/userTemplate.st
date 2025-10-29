@@ -1,1 +1,1 @@
-Pergunta: ${Pergunta}
+Pergunta: {Pergunta}
