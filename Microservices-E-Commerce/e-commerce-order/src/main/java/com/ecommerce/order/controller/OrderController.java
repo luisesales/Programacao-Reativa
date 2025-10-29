@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.order.model.Order;
+import com.ecommerce.order.model.Product;
 import com.ecommerce.order.service.OrderService;
 
 @RestController
@@ -36,6 +37,14 @@ public class OrderController {
         Optional<Order> order = orderService.getOrderById(id);
         return order.map(ResponseEntity::ok)
                       .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<Product>> getProducts() {
+        logger.info("Request received to get products from Product Service.");
+        List<Product> products = orderService.getProducts();
+        logger.info("Products retrieved successfully from Product Service.");
+        return ResponseEntity.ok(products);                
     }
 
     @PostMapping
