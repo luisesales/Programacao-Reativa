@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.order.exchange.ProductHttpInterface;
 import com.ecommerce.order.exchange.ProductHttpInterfaceFallback;
 import com.ecommerce.order.model.Order;
+import com.ecommerce.order.model.Product;
 import com.ecommerce.order.repository.OrderRepository;
 
 @Service
@@ -39,6 +40,20 @@ public class OrderService {
         logger.info("Fetching order with id: {}", id);
         return orderRepository.findById(id);
         
+    }
+
+    public List<Product> getProducts() {
+        logger.info("Fetching products from Product Service");
+        try {
+            List<Product> products = productHttpInterface.getAllProducts().getBody();
+            logger.info("Products fetched successfully from Product Service");
+            return products;
+        } catch (Exception e) {
+            logger.error("Error fetching products from Product Service: {}", e.getMessage());
+            return fallback.getAllProducts().getBody();
+        }
+
+
     }
 
     public String createOrder(Order order) {
