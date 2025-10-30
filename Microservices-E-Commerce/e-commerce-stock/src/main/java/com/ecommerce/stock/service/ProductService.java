@@ -166,8 +166,7 @@ public class ProductService {
 
     public Mono<Boolean> buyProduct(UUID id, int quantity) {
         logger.info("Buying product with id: {} and quantity: {}", id, quantity);
-        return productRepository.findById(id)
-                .publishOn(Schedulers.boundedElastic())
+        return productRepository.findById(id)                
                 .flatMap(product -> {
                     if (product.getStockQuantity() >= quantity) {
                         product.decreaseStock(quantity);
@@ -229,8 +228,7 @@ public class ProductService {
 
     public Mono<Boolean> increaseStock(UUID id, int quantity) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
-        return productRepository.findById(id)
-                .publishOn(Schedulers.boundedElastic())
+        return productRepository.findById(id)                
                 .flatMap(product -> {
                     product.increaseStock(quantity);
                     productRepository.save(product);
