@@ -53,8 +53,10 @@ public class ProductService {
                     .flatMap(products -> cache.saveAll(products).thenReturn(products))
                     .flatMapMany(Flux::fromIterable)                    
             )
-            .doOnError(e -> logger.error("Error fetching all products", e))
-            .subscribeOn(Schedulers.boundedElastic());
+            .onErrorResume(e -> {
+                logger.error("Error fetching all products", e);
+                return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching all products: " + e.getMessage(), e));})
+            .subscribeOn(Schedulers.parallel());                
     }
     
 
@@ -69,8 +71,9 @@ public class ProductService {
                         return Mono.empty();
                                 }))
             )
-            .doOnError(e -> logger.error("Error fetching product {}", id, e))
-            .subscribeOn(Schedulers.boundedElastic());
+            .onErrorResume(e -> {
+                logger.error("Error fetching product {}", id, e);
+                return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching product " + id + " : " + e.getMessage(), e));});
     }
 
 
@@ -79,17 +82,15 @@ public class ProductService {
         return productRepository.save(product)
             .flatMap(saved -> cache.save(saved).thenReturn(saved))
             .doOnSuccess(p -> logger.info("Product created successfully: {}", p.getId()))
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 logger.error("Error creating product: {}", e.getMessage(), e);
-                Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Product with message: " + e.getMessage(), e));
-            })
-            .subscribeOn(Schedulers.boundedElastic());
+                return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Product with message: " + e.getMessage(), e));
+            });
     }                        
     
     public Mono<Product> updateProduct(UUID id, Product productDetails) {
         logger.info("Updating product with id: {}", id);
         return productRepository.findById(id)
-                .publishOn(Schedulers.boundedElastic())
                 .flatMap(product -> {
                     product.setName(productDetails.getName());
                     product.setDescription(productDetails.getDescription());
@@ -105,16 +106,15 @@ public class ProductService {
                     logger.warn("Product with id {} not found for update.", id);
                     return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
-                .doOnError(e -> {
+                .onErrorResume(e -> {
                     logger.error("Error updating product: {}", e.getMessage(), e);
-                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Updating Product with message: " + e.getMessage(), e));
+                    return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Updating Product with message: " + e.getMessage(), e));
                 });
     }
 
     public Mono<String> deleteProduct(UUID id) {
     logger.info("Deleting product with id: {}", id);
-    return productRepository.findById(id)
-            .publishOn(Schedulers.boundedElastic())
+    return productRepository.findById(id)        
             .flatMap(product -> {
                 logger.info("Product with id {} found for deletion.", id);
                 return productRepository.delete(product)
@@ -128,9 +128,9 @@ public class ProductService {
             .doOnSuccess(message -> 
                 logger.info("Product with id {} deleted successfully.", id)
             )
-            .doOnError(e -> {
-                Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Deleting Product with message: " + e.getMessage(), e));
+            .onErrorResume(e -> {
                 logger.error("Error deleting product with id {}: {}", id, e.getMessage(), e);
+                return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Deleting Product with message: " + e.getMessage(), e));                
             });
     }
 
@@ -143,11 +143,10 @@ public class ProductService {
                                 .flatMap(products -> cache.saveByCategory(category, products).thenReturn(products))
                                 .flatMapMany(Flux::fromIterable)                                
             )
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 logger.error("Error fetching products by category " + category, e);
-                Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products by category " + category + " : " + e.getMessage(), e));
-            })
-            .subscribeOn(Schedulers.boundedElastic());
+                return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products by category " + category + " : " + e.getMessage(), e));
+            });
     }
 
     public Flux<Product> findByPriceBetween(Double minPrice, Double maxPrice) {
@@ -159,11 +158,10 @@ public class ProductService {
                     .flatMap(products -> cache.saveByPriceRange(minPrice, maxPrice, products).thenReturn(products))
                     .flatMapMany(Flux::fromIterable)                                    
             )
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 logger.error("Error fetching products with price between " + minPrice + " and " + maxPrice, e);
-                Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products with price between " + minPrice + " and " + maxPrice + " : " + e.getMessage(), e));
-            })
-            .subscribeOn(Schedulers.boundedElastic());
+                return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching products with price between " + minPrice + " and " + maxPrice + " : " + e.getMessage(), e));
+            });
     }
 
     public Mono<Boolean> buyProduct(UUID id, int quantity) {
@@ -185,9 +183,9 @@ public class ProductService {
                     logger.warn("Product with id {} not found for deletion.", id);
                     return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
-                .doOnError(e -> {
+                .onErrorResume(e -> {
                     logger.error("Error buying product: {}", e.getMessage(), e);
-                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Buying Product with message: " + e.getMessage(), e));
+                    return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Buying Product with message: " + e.getMessage(), e));
                 });
     }
 
@@ -226,8 +224,7 @@ public class ProductService {
                     return Mono.just(new OrderResult(false,
                         "Error: " + e.getMessage(), errorProduct));
                 });
-        })
-        .subscribeOn(Schedulers.boundedElastic());
+        });
     }
 
     public Mono<Boolean> increaseStock(UUID id, int quantity) {
@@ -244,9 +241,9 @@ public class ProductService {
                     logger.warn("Product with id {} not found for stock increase.", id);
                     return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
-                .doOnError(e -> {
+                .onErrorResume(e -> {
                     logger.error("Error increasing stock: {}", e.getMessage(), e);
-                    Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Increasing Stock with message: " + e.getMessage(), e));
+                    return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Increasing Stock with message: " + e.getMessage(), e));
                 });
     }
 
