@@ -20,6 +20,8 @@ import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.repository.ProductRepository;
 
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class ProductService {
 
@@ -186,7 +188,7 @@ public class ProductService {
                 });
     }
 
-    @Scheduled(fixedRate = 15 * 60 * 1000) 
+    @Scheduled(fixedRate = 1 * 60 * 1000) 
     @CacheEvict(value="products", allEntries = true)
     public void clearCache() {
         System.out.println("Products Cache was cleared");
