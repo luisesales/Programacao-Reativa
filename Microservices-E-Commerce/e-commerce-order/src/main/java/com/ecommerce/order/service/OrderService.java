@@ -43,11 +43,10 @@ public class OrderService {
 
     public Flux<Order> getAllOrders() {
         logger.info("Fetching all orders (reactive)");
-        return orderRepository.findAll()
-                              .publishOn(Schedulers.boundedElastic())
-                              .doOnError(e -> {
+        return orderRepository.findAll()                              
+                              .onErrorResume(e -> {
                                 logger.error("Error fetching all orders", e);
-                                Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching all orders" + e.getMessage(), e));
+                                return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching all orders" + e.getMessage(), e));
                             });
     }
     public Mono<OrderDTO> getOrderById(UUID id) {
@@ -55,18 +54,11 @@ public class OrderService {
         return orderRepository.findById(id)
             .map(order -> new OrderDTO(order.getId(),order.getName(), order.getProductsQuantity(), order.getTotalPrice()))
             .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found or access denied")))
-                              .doOnError(e -> {
+                              .onErrorResume(e -> {
                                 logger.error("Error fetching order id " + id, e);
-                                Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service is currently unavailable: " + e.getMessage(), e));
-            }).subscribeOn(Schedulers.boundedElastic());
-}
-
-    // public Mono<Order> getOrderById(UUID id) {
-        
-    //     return orderRepository.findById(id)
-    //                           .publishOn(Schedulers.boundedElastic())
-                             
-    // }
+                                return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service is currently unavailable: " + e.getMessage(), e));
+            });
+    }
 
     public Flux<OrderResult> createOrder(Order order) {
     logger.info("Creating new order reactive: {}", order.getId());
@@ -78,8 +70,7 @@ public class OrderService {
         ));
     }
     logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
-    return productHttpInterface.orderProduct(Mono.just(order))
-        .publishOn(Schedulers.boundedElastic())
+    return productHttpInterface.orderProduct(Mono.just(order))        
         .flatMap(orderResult -> {
             if (orderResult.isSuccess()) {
                 return r2dbcEntityTemplate.insert(Order.class).using(order)
@@ -90,14 +81,13 @@ public class OrderService {
                     .doOnNext(result -> {
                         logger.info("OrderResult returned successfully for order id: {}", order.getId());
                         orderRepository.save(order)                
-                        .doOnError(e -> {
+                        .onErrorResume(e -> {
                             logger.error("Error creating order: {}", e.getMessage(), e);
-                            Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
+                            return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
                         })
                         .doOnSuccess(createdOrder -> {
                                 logger.info("Order created successfully with id: {}", createdOrder.getId());
-                            })
-                        .subscribeOn(Schedulers.boundedElastic());
+                            });
                     });
             } else {
                 logger.error("Failed to order products for order id: {}", order.getId());
@@ -123,8 +113,7 @@ public class OrderService {
 
     public Mono<Order> updateOrder(UUID id, Order orderDetails) {
         logger.info("Updating order with id: {}", id);
-        return orderRepository.findById(id)
-                .publishOn(Schedulers.boundedElastic())
+        return orderRepository.findById(id)            
                 .flatMap(order -> {
                     order.setName(orderDetails.getName());
                     order.setTotalPrice(orderDetails.getTotalPrice());
@@ -136,7 +125,7 @@ public class OrderService {
                     logger.warn("Order with id {} not found for update.", id);
                     return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order with "+ id + " not found"));
                 }))
-                .doOnError(e -> {
+                .onErrorResume(e -> {
                     logger.error("Error updating order: {}", e.getMessage(), e);
                     Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Service is currently unavailable: " + e.getMessage(), e));
                 });
@@ -144,8 +133,7 @@ public class OrderService {
 
     public Mono<Boolean> deleteOrder(UUID id) {
         logger.info("Deleting order with id: {}", id);
-        return orderRepository.findById(id)
-                .publishOn(Schedulers.boundedElastic())
+        return orderRepository.findById(id)                
                 .flatMap(order ->
                     orderRepository.delete(order)
                                    .then(Mono.fromCallable(() -> {
