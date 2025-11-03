@@ -6,11 +6,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.r2dbc.core.DatabaseClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.springframework.data.r2dbc.dialect.PostgresDialect;
 
 
 
@@ -33,14 +32,21 @@ public class R2dbcSqlConfig{
     }
 
     @Bean
-    public R2dbcCustomConversions r2dbcCustomConversions() {
-        return R2dbcCustomConversions.of(
-                PostgresDialect.INSTANCE,
-                List.of(
-                        new JsonMapConverters.JsonToMapConverter(),
-                        new JsonMapConverters.MapToJsonConverter()
-                )
+    public R2dbcCustomConversions r2dbcCustomConversions(ObjectMapper objectMapper) {
+        return new R2dbcCustomConversions(
+            R2dbcCustomConversions.STORE_CONVERSIONS,
+            List.of(
+                new JsonMapConverters.JsonToMapConverter(objectMapper),
+                new JsonMapConverters.MapToJsonConverter(objectMapper)
+            )
         );
+    }
+
+    @Bean
+    public R2dbcMappingContext r2dbcMappingContext(R2dbcCustomConversions conversions) {
+        R2dbcMappingContext context = new R2dbcMappingContext();
+        context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+        return context;
     }
 }
 //CREATE ALIAS IF NOT EXISTS uuid_generate_v4 FOR "java.util.UUID.randomUUID";
