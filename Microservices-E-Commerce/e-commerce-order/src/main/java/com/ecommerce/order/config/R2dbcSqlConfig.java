@@ -2,10 +2,14 @@ package com.ecommerce.order.config;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.r2dbc.core.DatabaseClient;
 
@@ -14,9 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @Configuration
-public class R2dbcSqlConfig{
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+public class R2dbcSqlConfig{    
 
     @Bean
     public ApplicationRunner init(DatabaseClient client) {
@@ -30,8 +32,10 @@ public class R2dbcSqlConfig{
             );
         """).fetch().rowsUpdated().subscribe();
     }
+    
 
     @Bean
+    @Primary
     public R2dbcCustomConversions r2dbcCustomConversions(ObjectMapper objectMapper) {
         return new R2dbcCustomConversions(
             R2dbcCustomConversions.STORE_CONVERSIONS,
