@@ -2,14 +2,11 @@ package com.ecommerce.order.config;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.r2dbc.core.DatabaseClient;
 
@@ -26,9 +23,15 @@ public class R2dbcSqlConfig{
             CREATE EXTENSION IF NOT EXISTS "uuid-ossp";            
             CREATE TABLE IF NOT EXISTS orders (
                 id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                products_quantity JSONB NOT NULL,
+                name VARCHAR(255) NOT NULL,                
                 total_price DECIMAL NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS order_items (
+                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+                product_id UUID NOT NULL,
+                quantity INT NOT NULL,
             );
         """).fetch().rowsUpdated().subscribe();
     }

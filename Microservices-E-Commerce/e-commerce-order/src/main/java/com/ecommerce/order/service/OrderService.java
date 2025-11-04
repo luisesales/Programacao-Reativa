@@ -15,6 +15,7 @@ import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.model.Product;
 import com.ecommerce.order.model.dto.OrderDTO;
 import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.order.repository.OrderItemRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,15 +29,18 @@ public class OrderService {
 
     
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final ProductHttpInterface productHttpInterface;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
     public OrderService(OrderRepository orderRepository,
+                        OrderItemRepository orderItemRepository,
                         ProductHttpInterface productHttpInterface,
                         R2dbcEntityTemplate template
                         ) 
                                 {
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.productHttpInterface = productHttpInterface;    
         r2dbcEntityTemplate = template;    
     }
@@ -69,55 +73,59 @@ public class OrderService {
     // }
 
     public Flux<OrderResult> createOrder(Order order) {
-    logger.info("Creating new order reactive: {}", order.getId());
-    if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
-        logger.warn("Order request is empty or invalid.");
-        return Flux.error(new ResponseStatusException(
-            HttpStatus.BAD_REQUEST,
-            "Invalid order request: missing products."
-        ));
-    }
-    logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
-    return productHttpInterface.orderProduct(Mono.just(order))
-        .publishOn(Schedulers.boundedElastic())
-        .flatMap(orderResult -> {
-            if (orderResult.isSuccess()) {
-                return r2dbcEntityTemplate.insert(Order.class).using(order)
-                    .doOnSuccess(savedOrder ->
-                        logger.info("Order created successfully: {}", savedOrder.getId())
-                    )
-                    .thenReturn(orderResult)
-                    .doOnNext(result -> {
-                        logger.info("OrderResult returned successfully for order id: {}", order.getId());
-                        orderRepository.save(order)                
-                        .doOnError(e -> {
-                            logger.error("Error creating order: {}", e.getMessage(), e);
-                            Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
-                        })
-                        .doOnSuccess(createdOrder -> {
-                                logger.info("Order created successfully with id: {}", createdOrder.getId());
+        logger.info("Creating new order reactive: {}", order.getId());
+        if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
+            logger.warn("Order request is empty or invalid.");
+            return Flux.error(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid order request: missing products."
+            ));
+        }
+        logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
+        return productHttpInterface.orderProduct(Mono.just(order))        
+            .flatMap(orderResult -> {
+                if (orderResult.isSuccess()) {
+                    return r2dbcEntityTemplate.insert(Order.class).using(order)
+                        .doOnSuccess(savedOrder ->
+                            logger.info("Order created successfully: {}", savedOrder.getId())
+                        )
+                        .thenReturn(orderResult)
+                        .doOnNext(result -> {
+                            logger.info("OrderResult returned successfully for order id: {}", order.getId());
+                            orderRepository.save(order)   
+                            .flatMap(savedOrder ->
+                                Flux.fromIterable(order.getProductsQuantity().entrySet()) 
+                                    .map(entry -> new OrderItem(savedOrder.getId(), entry.getKey(), entry.getValue())) 
+                                    .flatMap(orderItemRepository::save) 
+                            );
                             })
-                        .subscribeOn(Schedulers.boundedElastic());
-                    });
-            } else {
-                logger.error("Failed to order products for order id: {}", order.getId());
-                return Flux.concat(
-                    Flux.just(orderResult),
-                    Flux.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Failed to order products for order id: " + order.getId()
-                    ))
-                );
-            }
-        })
-        .onErrorResume(e -> {
-            logger.error("Error creating order: {}", e.getMessage());
-            OrderResult errorResult = new OrderResult(false, "Error creating order: " + e.getMessage(), new Product());            
-            return Flux.error(
-                new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
-            );                       
-        });
-}
+                            .doOnError(e -> {
+                                logger.error("Error creating order: {}", e.getMessage(), e);
+                                Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
+                            })
+                            .doOnSuccess(createdOrder -> {
+                                    logger.info("Order created successfully with id: {}", createdOrder.getId());
+                                });
+                        });
+                } else {
+                    logger.error("Failed to order products for order id: {}", order.getId());
+                    return Flux.concat(
+                        Flux.just(orderResult),
+                        Flux.error(new ResponseStatusException(
+                            HttpStatus.SERVICE_UNAVAILABLE,
+                            "Failed to order products for order id: " + order.getId()
+                        ))
+                    );
+                }
+            })
+            .onErrorResume(e -> {
+                logger.error("Error creating order: {}", e.getMessage());
+                OrderResult errorResult = new OrderResult(false, "Error creating order: " + e.getMessage(), new Product());            
+                return Flux.error(
+                    new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
+                );                       
+            }).subscribeOn(Schedulers.boundedElastic());    
+    }
 
 
 
