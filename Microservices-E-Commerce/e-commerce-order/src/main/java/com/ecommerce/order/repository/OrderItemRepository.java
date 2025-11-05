@@ -16,6 +16,6 @@ public interface OrderItemRepository extends R2dbcRepository<OrderItem, UUID> {
     Mono<Void> deleteById(UUID id);
     Flux<OrderItem> findByOrderId(UUID orderId);
     
-    @Query("SELECT * FROM order_item WHERE order_id IN (:orderIds)")
+    @Query("SELECT * FROM order_items WHERE order_id IN (:orderIds)")
     Flux<OrderItem> findByOrderIds(Collection<UUID> orderIds);
 }   

@@ -22,7 +22,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -59,7 +59,7 @@
           <stringProp name="filename"></stringProp>
         </ResultCollector>
         <hashTree/>
-        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ThreadsStateOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Active Threads Over Time" enabled="true">
+        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ThreadsStateOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Active Threads Over Time">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -308,7 +308,7 @@
   &quot;name&quot;: &quot;Notebook Vision R15&quot;,&#xd;
   &quot;description&quot;: &quot;Um notebook da Positivo de Linux com Ryzen 7 6700U, 8gb de RAM e um SSD NVMe M2 de 512GB&quot;,&#xd;
   &quot;price&quot;: 3500.00,&#xd;
-  &quot;stockQuantity&quot; : 5,&#xd;
+  &quot;stockQuantity&quot; : 20,&#xd;
   &quot;category&quot; : &quot;Tecnologia&quot;&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
@@ -331,7 +331,7 @@
           </HeaderManager>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetAllOrders">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetAllOrders" enabled="false">
           <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-order/orders</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -343,7 +343,7 @@
         </HTTPSamplerProxy>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetOrderById" enabled="false">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-order/orders/50c7936b-b9be-4917-82ca-554488877c18</stringProp>
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-order/orders/378ba24b-4da6-4fda-b3fd-2a876e7337eb</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -353,7 +353,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateOrder" enabled="false">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateOrder">
           <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-order/orders</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
@@ -366,7 +366,7 @@
                 <stringProp name="Argument.value">{&#xd;
   &quot;name&quot;: &quot;Notebook Vision R15&quot;,&#xd;
   &quot;productsQuantity&quot;: {&#xd;
-  	&quot;a1d9d109-90ec-4d11-ac2e-a645047dc0ba&quot; : 1&#xd;
+  	&quot;0cb580e2-72e0-4ea5-9962-8a98187e9afe&quot; : 1&#xd;
   },&#xd;
   &quot;totalPrice&quot;: 3500.00&#xd;
 }&#xd;

@@ -55,10 +55,16 @@ public class OrderService {
         return orderRepository.findAll()
             .collectList() 
             .flatMapMany(orders -> {
-            List<UUID> orderIds = orders.stream()
-                .map(Order::getId)
-                .toList();
-        
+                if (orders.isEmpty()) {
+                    return Flux.empty(); 
+                }
+                List<UUID> orderIds = orders.stream()
+                    .map(Order::getId)
+                    .toList();
+            
+                if (orderIds.isEmpty()) {
+                    return Flux.fromIterable(orders); 
+                }
                 return orderItemRepository.findByOrderIds(orderIds)                
                         .groupBy(OrderItem::getOrderId)
                         .flatMap(group ->
@@ -119,16 +125,17 @@ public class OrderService {
                     return r2dbcEntityTemplate.insert(Order.class).using(order)
                         .doOnSuccess(savedOrder ->
                             logger.info("Order created successfully: {}", savedOrder.getId())
-                        )
-                        .thenReturn(orderResult)
+                        )                        
                         .doOnNext(result -> {
                             logger.info("OrderResult returned successfully for order id: {}", order.getId());
                             orderRepository.save(order)   
                                 .doOnNext(savedOrder -> {
+                                System.out.println("✅ Order saved: " + savedOrder.getId());
                                 Flux.fromIterable(order.getProductsQuantity().entrySet())
                                     .map(entry -> new OrderItem(savedOrder.getId(), entry.getKey(), entry.getValue()))
                                     .flatMap(orderItemRepository::save)
-                                    .doOnNext(savedItem -> {                                         
+                                    .doOnNext(savedItem -> {     
+                                        System.out.println("✅ Order item saved: " + savedItem.getProductId() + " for order id: " + savedItem.getOrderId());                                    
                                         logger.info("Order item saved successfully: {} for order id: {}", savedItem.getProductId(), savedItem.getOrderId());
                                     })
                                     .doOnError(e -> {
@@ -143,7 +150,7 @@ public class OrderService {
                                 .doOnSuccess(createdOrder -> {
                                         logger.info("Order created successfully with id: {}", createdOrder.getId());
                                     });
-                        });
+                        }).thenReturn(orderResult);
                 } else {
                     logger.error("Failed to order products for order id: {}", order.getId());
                     return Flux.concat(
