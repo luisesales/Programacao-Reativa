@@ -342,8 +342,8 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetOrderById" enabled="false">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-order/orders/378ba24b-4da6-4fda-b3fd-2a876e7337eb</stringProp>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetOrderById">
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-order/orders/6e9ebdc4-4771-4ffb-b494-edc54ddab06f</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -353,7 +353,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateOrder">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateOrder" enabled="false">
           <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-order/orders</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
@@ -366,7 +366,7 @@
                 <stringProp name="Argument.value">{&#xd;
   &quot;name&quot;: &quot;Notebook Vision R15&quot;,&#xd;
   &quot;productsQuantity&quot;: {&#xd;
-  	&quot;0cb580e2-72e0-4ea5-9962-8a98187e9afe&quot; : 1&#xd;
+  	&quot;583b3496-6c48-4375-871c-eb7088182470&quot; : 1&#xd;
   },&#xd;
   &quot;totalPrice&quot;: 3500.00&#xd;
 }&#xd;

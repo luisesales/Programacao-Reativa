@@ -121,37 +121,7 @@ public class OrderService {
         logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
         return productHttpInterface.orderProduct(Mono.just(order))        
             .flatMap(orderResult -> {
-                if (orderResult.isSuccess()) {
-                    return r2dbcEntityTemplate.insert(Order.class).using(order)
-                        .doOnSuccess(savedOrder ->
-                            logger.info("Order created successfully: {}", savedOrder.getId())
-                        )                        
-                        .doOnNext(result -> {
-                            logger.info("OrderResult returned successfully for order id: {}", order.getId());
-                            orderRepository.save(order)   
-                                .doOnNext(savedOrder -> {
-                                System.out.println("✅ Order saved: " + savedOrder.getId());
-                                Flux.fromIterable(order.getProductsQuantity().entrySet())
-                                    .map(entry -> new OrderItem(savedOrder.getId(), entry.getKey(), entry.getValue()))
-                                    .flatMap(orderItemRepository::save)
-                                    .doOnNext(savedItem -> {     
-                                        System.out.println("✅ Order item saved: " + savedItem.getProductId() + " for order id: " + savedItem.getOrderId());                                    
-                                        logger.info("Order item saved successfully: {} for order id: {}", savedItem.getProductId(), savedItem.getOrderId());
-                                    })
-                                    .doOnError(e -> {
-                                        logger.error("Error saving order item for order id {}: {}", savedOrder.getId(), e.getMessage(), e);
-                                        Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving order items: " + e.getMessage(), e));
-                                    });
-                                })                      
-                                .doOnError(e -> {
-                                    logger.error("Error creating order: {}", e.getMessage(), e);
-                                    Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
-                                })
-                                .doOnSuccess(createdOrder -> {
-                                        logger.info("Order created successfully with id: {}", createdOrder.getId());
-                                    });
-                        }).thenReturn(orderResult);
-                } else {
+                if (!orderResult.isSuccess()) {
                     logger.error("Failed to order products for order id: {}", order.getId());
                     return Flux.concat(
                         Flux.just(orderResult),
@@ -161,14 +131,35 @@ public class OrderService {
                         ))
                     );
                 }
-            })
+                return orderRepository.save(order)   
+                    .flatMapMany(savedOrder -> {                                                        
+                        return Flux.fromIterable(order.getProductsQuantity().entrySet())
+                            .map(entry -> new OrderItem(savedOrder.getId(), entry.getKey(), entry.getValue()))
+                            .flatMap(orderItemRepository::save)
+                            .doOnNext(savedItem -> {                                         
+                                logger.info("Order item saved successfully: {} for order id: {}", savedItem.getProductId(), savedItem.getOrderId());
+                            })
+                            .onErrorResume(e -> {
+                                logger.error("Error saving order item for order id {}: {}", savedOrder.getId(), e.getMessage(), e);
+                                return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving order items: " + e.getMessage(), e));
+                            })                            
+                            .thenMany(Flux.just(orderResult));
+                    })                                            
+                    .onErrorResume(e -> {
+                        logger.error("Error creating order: {}", e.getMessage(), e);
+                        return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
+                    }).doOnComplete(() -> {
+                        logger.info("Order created successfully with id: {}", order.getId());
+                    });
+                                                    
+            })        
             .onErrorResume(e -> {
                 logger.error("Error creating order: {}", e.getMessage());
                 OrderResult errorResult = new OrderResult(false, "Error creating order: " + e.getMessage(), new Product());            
                 return Flux.error(
                     new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
                 );                       
-            }).subscribeOn(Schedulers.boundedElastic());    
+            });   
     }
 
 
