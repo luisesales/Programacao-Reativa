@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 
-@SpringBootApplication(scanBasePackages = "com.ecommerce.order")
+@SpringBootApplication
 @EnableDiscoveryClient
 @EnableR2dbcRepositories
 public class ECommerceOrderApplication {

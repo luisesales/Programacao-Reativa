@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -19,8 +19,7 @@ public class Order{
     @NotBlank(message = "Name is mandatory")
     @Size(min = 5, message = "The name must have at least 5 characters")
     private String name;
-    @NotEmpty(message = "Products Ordered are mandatory")
-    @Column("products_quantity")
+    @Transient
     private HashMap<UUID,Integer> productsQuantity;
 
     @NotNull(message = "Total Price is mandatory")

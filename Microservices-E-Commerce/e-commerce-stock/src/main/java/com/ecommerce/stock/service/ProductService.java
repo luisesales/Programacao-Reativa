@@ -166,7 +166,7 @@ public class ProductService {
 
     public Mono<Boolean> buyProduct(UUID id, int quantity) {
         logger.info("Buying product with id: {} and quantity: {}", id, quantity);
-        return productRepository.findById(id)            
+        return productRepository.findById(id)                
                 .flatMap(product -> {
                     if (product.getStockQuantity() >= quantity) {
                         product.decreaseStock(quantity);
