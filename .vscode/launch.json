@@ -75,6 +75,22 @@
         },
         {
             "type": "java",
+            "name": "ECommerceTransaction1",
+            "request": "launch",
+            "mainClass": "com.ecommerce.transaction.ECommerceTransactionApplication",
+            "projectName": "e-commerce-transaction",
+            "vmArgs": "-Dspring.profiles.active=transaction-server-reactive-1"
+        },
+        {
+            "type": "java",
+            "name": "ECommerceTransaction2",
+            "request": "launch",
+            "mainClass": "com.ecommerce.transaction.ECommerceTransactionApplication",
+            "projectName": "e-commerce-transaction",
+            "vmArgs": "-Dspring.profiles.active=transaction-server-reactive-2"
+        },
+        {
+            "type": "java",
             "name": "ECommerceApiGatewayApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.api.gateway.ECommerceApiGatewayApplication",

@@ -15,7 +15,6 @@ import com.ecommerce.transaction.repository.TransactionRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
  
 
 @Service
@@ -76,9 +75,9 @@ public class TransactionService {
             .onErrorResume(e -> {
                 logger.error("Error creating Transaction: {}", e.getMessage(), e);
                 return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
-            }).doOnComplete(() -> {
+            }).doOnSuccess(e -> {
                 logger.info("Transaction created successfully with order id: {}", order.getId());
             });  
-        }                                                  
+    }                                                  
 } 
     

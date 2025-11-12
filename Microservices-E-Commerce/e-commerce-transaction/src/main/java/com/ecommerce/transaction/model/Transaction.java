@@ -1,10 +1,8 @@
 package com.ecommerce.transaction.model;
 
-import java.util.HashMap;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -14,12 +12,14 @@ import jakarta.validation.constraints.Size;
 
 @Table(name = "transactions")
 public class Transaction {
-      @Id 
+    @Id 
     private UUID id;
+
     @NotBlank(message = "Name is mandatory")
     @Size(min = 5, message = "The name must have at least 5 characters")
     private String name;
-    @Transient
+
+    @Column("order_id")
     private UUID orderId;
 
     @NotNull(message = "Total Price is mandatory")

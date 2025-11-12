@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.transaction.model.Order;
-import com.ecommerce.transaction.model.OrderResult;
-import com.ecommerce.transaction.model.Product;
 import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.service.TransactionService;
 
