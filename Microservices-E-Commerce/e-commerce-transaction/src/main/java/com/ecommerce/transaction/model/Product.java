@@ -1,4 +1,4 @@
-package com.ecommerce.order.model;
+package com.ecommerce.transaction.model;
 
 import org.springframework.data.annotation.Id;
 

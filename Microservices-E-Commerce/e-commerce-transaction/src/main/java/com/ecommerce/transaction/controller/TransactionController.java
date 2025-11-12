@@ -18,8 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.ecommerce.transaction.model.Order;
 import com.ecommerce.transaction.model.OrderResult;
 import com.ecommerce.transaction.model.Product;
+import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.service.TransactionService;
-import com.ecommerce.transaction.model.dto.OrderDTO;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,17 +44,17 @@ public class TransactionController {
     }
 
     @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<TransactionDTO> getTransactionById(@PathVariable UUID id) {
+    public Mono<Transaction> getTransactionById(@PathVariable UUID id) {
         return transactionService.getTransactionById(id);
                                 
     }
 
     @PostMapping
-    public Mono<Transaction> createTransaction(@RequestBody Mono<Transaction> transactionMono) {
-        return transactionMono
+    public Mono<Transaction> createTransaction(@RequestBody Mono<Order> orderMono) {
+        return orderMono
         .switchIfEmpty(Mono.error(new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Transaction body is missing"
+                "Order body is missing"
             )))
         .flatMap(transaction -> {
             logger.info("Request received to transaction from: {} with price: {}", transaction.getName(), transaction.getTotalPrice());

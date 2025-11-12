@@ -33,6 +33,12 @@ public class Transaction {
         this.totalPrice = 0.0;
     }
 
+    public Transaction(String name, double totalPrice, UUID orderId) {
+        this.name = name;        
+        this.totalPrice = totalPrice;
+        this.orderId = orderId;
+    }
+
     public UUID getId() {
         return id;
     }
