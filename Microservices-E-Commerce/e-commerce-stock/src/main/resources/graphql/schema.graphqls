@@ -1,0 +1,86 @@
+"""
+Representa um produto no estoque
+"""
+type Product {
+    id: ID!
+    name: String!
+    description: String
+    price: Float!
+    category: String!
+    stockQuantity: Int!
+}
+
+"""
+Representa uma requisição de pedido de compra (retorno)
+"""
+type Order {
+    id: ID
+    name: String
+    productsQuantity: [ProductQuantity]   # ✔ Output Type
+    totalPrice: Float
+}
+
+"""
+Representa a quantidade de produtos de um pedido (retorno)
+"""
+type ProductQuantity {
+    productId: ID!
+    quantity: Int!
+}
+
+"""
+Representa o resultado de um pedido
+"""
+type OrderResult {
+    success: Boolean!
+    response: String
+    product: Product
+}
+
+"""
+Entrada de produtos e quantidades em um pedido (input)
+"""
+input ProductQuantityInput {
+    productId: ID!
+    quantity: Int!
+}
+
+# ===============================
+# QUERIES (equivalentes a GET)
+# ===============================
+type Query {
+    getAllProducts: [Product]
+    getProductById(id: ID!): Product
+    getProductByCategory(param: String!): [Product]
+}
+
+# ===============================
+# MUTATIONS (equivalentes a POST/PUT/DELETE)
+# ===============================
+type Mutation {
+    createProduct(product: ProductInput!): Product
+    updateProduct(id: ID!, product: ProductInput!): Product
+    deleteProduct(id: ID!): String
+    orderProduct(order: OrderInput!): [OrderResult]
+}
+
+# ===============================
+# INPUTS
+# ===============================
+input ProductInput {
+    name: String!
+    description: String
+    price: Float!
+    category: String!
+    stockQuantity: Int!
+}
+
+"""
+Entrada completa de um pedido
+"""
+input OrderInput {
+    id: ID
+    name: String
+    productsQuantity: [ProductQuantityInput]  # ✔ Input Type
+    totalPrice: Float
+}
