@@ -18,6 +18,8 @@ import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.repository.ProductCacheRepository;
 import com.ecommerce.stock.repository.ProductRepository;
 
+import com.ecommerce.stock.config.ProductMapper;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -89,17 +91,22 @@ public class ProductService {
     }                        
     
     public Mono<Product> updateProduct(UUID id, Product productDetails) {
+        if (productDetails == null) return Mono.error(new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Product details body is missing"
+            ));
+        if (productDetails.getName() == null &&
+            productDetails.getDescription().isBlank() &&
+            productDetails.getPrice() < 0 &&
+            productDetails.getCategory() == null &&
+            productDetails.getStockQuantity() < 0) {
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty update payload"));
+        }
         logger.info("Updating product with id: {}", id);
         return productRepository.findById(id)
-                .flatMap(product -> {
-                    product.setName(productDetails.getName());
-                    product.setDescription(productDetails.getDescription());
-                    product.setPrice(productDetails.getPrice());
-                    product.setStockQuantity(productDetails.getStockQuantity());
-                    product.setCategory(productDetails.getCategory());
-                    product.setStockQuantity(productDetails.getStockQuantity());
-                    logger.info("Product with id {} updated successfully.", id);                    
-                    return productRepository.save(product)                    
+                .flatMap(existing -> {
+                    productMapper.updateProductFromInput(productDetails, existing);
+                    return productRepository.save(existing)
                         .flatMap(updated -> cache.save(updated).thenReturn(updated));
                 })
                 .switchIfEmpty(Mono.defer(() -> {

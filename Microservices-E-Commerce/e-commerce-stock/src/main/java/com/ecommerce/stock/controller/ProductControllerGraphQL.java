@@ -5,12 +5,12 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.OrderResult;
@@ -51,38 +51,15 @@ public class ProductControllerGraphQL {
     
 
     @MutationMapping
-    public Mono<Product> createProduct(@Argument Mono<Product> monoProduct) {
-        return monoProduct
-            .switchIfEmpty(Mono.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Product body is missing"
-            )))
-            .flatMap(product -> {
-                logger.info("Request received to create new product: {}", product.getName());
-                return productService.createProduct(product);
-                    
-            }
-        );       
+    public Mono<Product> createProduct(@Argument Product product) {
+        logger.info("Request received to create new product: {}", product.getName());
+        return productService.createProduct(product);
     }
 
     @MutationMapping
     public Mono<Product> updateProduct(@Argument UUID id, @Argument Product monoProductDetails) {
-        if (monoProductDetails == null) {
-        return Mono.error(new ResponseStatusException(
-            HttpStatus.BAD_REQUEST,
-            "Product details body is missing"
-            ));
-        }
-
         logger.info("Request received to update product with id: {}", id);
-
-        return productService.updateProduct(id, monoProductDetails)
-            .doOnSuccess(updatedProduct ->
-                logger.info("Product with id {} updated successfully.", updatedProduct.getId())
-            )
-            .doOnError(e ->
-                logger.error("Error updating product with id {}: {}", id, e.getMessage(), e)
-            );
+        return productService.updateProduct(id, monoProductDetails);
     }
 
     @MutationMapping
