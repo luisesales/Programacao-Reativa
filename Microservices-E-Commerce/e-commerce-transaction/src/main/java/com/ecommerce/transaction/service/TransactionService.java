@@ -51,7 +51,17 @@ public class TransactionService {
                                 logger.error("Error fetching transaction id " + id, e);
                                 Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Retrieving Transaction with id "+ id + " message: " + e.getMessage(), e));
             });
-        }
+    }
+
+    public Flux<Transaction> getTransactionByOrderId(UUID orderId) {
+        logger.info("Fetching transactions with order id: {}", orderId);
+         return transactionRepository.findByOrderId(orderId)                  
+            .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Transactions not found or access denied")))
+                              .doOnError(e -> {
+                                logger.error("Error fetching transaction id " + orderId, e);
+                                Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Retrieving Transaction with Order id "+ orderId + " message: " + e.getMessage(), e));
+            });
+    }
 
     public Mono<Transaction> createTransaction(Order order) {
         logger.info("Creating new transaction reactive: {}", order.getId());

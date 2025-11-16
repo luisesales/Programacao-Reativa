@@ -215,5 +215,13 @@ public class OrderService {
             return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
         });   
     }
+
+    public Flux<Product> getProductsByCategory(String category) {
+        logger.info("Fetching products from Product Service by category: {}", category);
+        return productHttpInterface.getProductsByCategory(category).onErrorResume(e -> {
+            logger.error("Error Returning Products from Product Service by category {}: {}", category, e.getMessage(), e);
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products by category Service is not available", e));
+        });   
+    }
 } 
     

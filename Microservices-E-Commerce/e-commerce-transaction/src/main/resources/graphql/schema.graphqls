@@ -1,13 +1,11 @@
 """
-Represents a product in stock
+Represents a Transaction in database
 """
-type Product {
+type Transaction{
     id: ID!
-    name: String!
-    description: String
-    price: Float!
-    category: String!
-    stockQuantity: Int!
+    name: String!    
+    totalPrice: Float
+    orderId: ID!
 }
 
 """
@@ -28,14 +26,6 @@ type ProductQuantity {
     quantity: Int!
 }
 
-"""
-Represents an OrderResult
-"""
-type OrderResult {
-    success: Boolean!
-    response: String
-    product: Product
-}
 
 """
 Input of a ProductQuantity (input)
@@ -49,31 +39,21 @@ input ProductQuantityInput {
 # QUERIES (GET)
 # ===============================
 type Query {
-    getAllProducts: [Product]
-    getProductById(id: ID!): Product
-    getProductByCategory(param: String!): [Product]
+    getAllTransactions: [Transaction]
+    getTransactionById(id: ID!): Transaction
+    getTransactionByOrderId(id: ID!): [Transaction]
 }
 
 # ===============================
 # MUTATIONS (POST/PUT/DELETE)
 # ===============================
 type Mutation {
-    createProduct(product: ProductInput!): Product
-    updateProduct(id: ID!, product: ProductInput!): Product
-    deleteProduct(id: ID!): String
-    orderProduct(order: OrderInput!): [OrderResult]
+    createTransaction(order: OrderInput!): Transaction    
 }
 
 # ===============================
 # INPUTS
 # ===============================
-input ProductInput {
-    name: String!
-    description: String
-    price: Float!
-    category: String!
-    stockQuantity: Int!
-}
 
 """
 Order Input representation

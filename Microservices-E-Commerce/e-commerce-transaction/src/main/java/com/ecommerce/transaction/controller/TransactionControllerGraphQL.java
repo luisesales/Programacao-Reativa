@@ -7,13 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.MutationMapping;
+
+
 
 import com.ecommerce.transaction.model.Order;
 import com.ecommerce.transaction.model.Transaction;
@@ -22,39 +22,35 @@ import com.ecommerce.transaction.service.TransactionService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-
-
-@RestController
-@RequestMapping("/transactions")
-public class TransactionController {
-    @Autowired
+@Controller
+public class TransactionControllerGraphQL {     
+    @Autowired   
     private final TransactionService transactionService;
 
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
-    public TransactionController(TransactionService transactionService) {
+    public TransactionControllerGraphQL(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
 
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @QueryMapping
     public Flux<Transaction> getAllTransactions() {
         return transactionService.getAllTransactions();
     }
 
-    @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<Transaction> getTransactionById(@PathVariable UUID id) {
-        return transactionService.getTransactionById(id);
-                                
-    }
-    
-    @GetMapping(path = "/order/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<Transaction> getTransactionByOrderId(@PathVariable UUID id) {
-        return transactionService.getTransactionByOrderId(id);
-                                
+    @QueryMapping
+    public Mono<Transaction> getTransactionById(@Argument UUID id) {
+        return transactionService.getTransactionById(id);                                
     }
 
-    @PostMapping
-    public Mono<Transaction> createTransaction(@RequestBody Mono<Order> orderMono) {
+    
+    @QueryMapping
+    public Flux<Transaction> getTransactionByOrderId(@Argument UUID id) {
+        return transactionService.getTransactionByOrderId(id);                                
+    }    
+
+    @MutationMapping
+    public Mono<Transaction> createTransaction(@Argument Mono<Order> orderMono) {
         return orderMono
         .switchIfEmpty(Mono.error(new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,

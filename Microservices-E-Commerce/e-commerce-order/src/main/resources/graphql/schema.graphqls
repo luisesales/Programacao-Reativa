@@ -51,30 +51,19 @@ input ProductQuantityInput {
 type Query {
     getAllProducts: [Product]
     getProductById(id: ID!): Product
-    getProductByCategory(param: String!): [Product]
+    getProductsByCategory(param: String!): [Product]
 }
 
 # ===============================
 # MUTATIONS (POST/PUT/DELETE)
 # ===============================
 type Mutation {
-    createProduct(product: ProductInput!): Product
-    updateProduct(id: ID!, product: ProductInput!): Product
-    deleteProduct(id: ID!): String
-    orderProduct(order: OrderInput!): [OrderResult]
+    createOrder(order: OrderInput!): Order
 }
 
 # ===============================
 # INPUTS
 # ===============================
-input ProductInput {
-    name: String!
-    description: String
-    price: Float!
-    category: String!
-    stockQuantity: Int!
-}
-
 """
 Order Input representation
 """

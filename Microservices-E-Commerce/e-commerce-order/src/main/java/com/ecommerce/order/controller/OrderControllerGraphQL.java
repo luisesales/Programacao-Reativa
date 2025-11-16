@@ -4,65 +4,66 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;    
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.MutationMapping;
 
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.model.Product;
-import com.ecommerce.order.service.OrderService;
 import com.ecommerce.order.model.dto.OrderDTO;
+import com.ecommerce.order.service.OrderService;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 
 
-@RestController
-@RequestMapping("/orders")
-public class OrderController {
+@Controller
+public class OrderControllerGraphQL {
     @Autowired
     private final OrderService orderService;
 
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
-
-    public OrderController(OrderService orderService) {
+    
+    public OrderControllerGraphQL(OrderService orderService) {
         this.orderService = orderService;
     }
 
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @QueryMapping
     public Flux<Order> getAllOrders() {
         return orderService.getAllOrders();
     }
 
-    @GetMapping(path = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<OrderDTO> getOrderById(@PathVariable UUID id) {
+    @QueryMapping
+    public Mono<OrderDTO> getOrderById(@Argument UUID id) {
         return orderService.getOrderById(id);
                                 
     }
 
-    @GetMapping(path = "/products", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @QueryMapping
     public Flux<Product> getProducts() {
         return orderService.getProducts();
     }
 
     
-    @GetMapping(path = "/products", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<Product> getProductsByCategory(@RequestParam String category) {
+    @QueryMapping
+    public Flux<Product> getProductsByCategory(@Argument String category) {
         return orderService.getProducts();
     }
 
-    @PostMapping
-    public Flux<OrderResult> createOrder(@RequestBody Mono<Order> orderMono) {
+    @MutationMapping
+    public Flux<OrderResult> createOrder(@Argument Mono<Order> orderMono) {
         return orderMono
         .switchIfEmpty(Mono.error(new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,

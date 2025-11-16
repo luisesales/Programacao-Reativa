@@ -2,6 +2,7 @@ package com.ecommerce.order.exchange;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
@@ -31,6 +32,12 @@ public interface ProductHttpInterface{
     @Retry(name= "rtStockGetProductById")
     @Bulkhead(name= "bhStockGetProductById")  
     public Mono<Product> getProductById(@PathVariable String id); 
+
+    @GetExchange("/category")
+    @CircuitBreaker(name= "cbStockGetProductByCategory")
+    @Retry(name= "rtStockGetProductByCategory")
+    @Bulkhead(name= "bhStockGetProductByCategory")  
+    public Flux<Product> getProductsByCategory(@RequestParam String category); 
 
     @PostExchange("/order")
     @CircuitBreaker(name= "cbStockOrderProduct")

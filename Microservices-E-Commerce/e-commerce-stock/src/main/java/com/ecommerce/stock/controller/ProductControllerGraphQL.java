@@ -51,16 +51,18 @@ public class ProductControllerGraphQL {
     
 
     @MutationMapping
-    public Mono<Product> createProduct(@Argument Product monoProduct) {
-        if (monoProduct == null) {
-        return Mono.error(new ResponseStatusException(
-            HttpStatus.BAD_REQUEST,
-            "Product body is missing"
-        ));
-        }
-
-        logger.info("Request received to create new product: {}", monoProduct.getName());
-        return productService.createProduct(monoProduct);   
+    public Mono<Product> createProduct(@Argument Mono<Product> monoProduct) {
+        return monoProduct
+            .switchIfEmpty(Mono.error(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Product body is missing"
+            )))
+            .flatMap(product -> {
+                logger.info("Request received to create new product: {}", product.getName());
+                return productService.createProduct(product);
+                    
+            }
+        );       
     }
 
     @MutationMapping
