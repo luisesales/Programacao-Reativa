@@ -17,6 +17,7 @@ import org.springframework.graphql.data.method.annotation.MutationMapping;
 
 import com.ecommerce.transaction.model.Order;
 import com.ecommerce.transaction.model.Transaction;
+import com.ecommerce.transaction.model.dto.OrderInputDTO;
 import com.ecommerce.transaction.service.TransactionService;
 
 import reactor.core.publisher.Flux;
@@ -50,15 +51,8 @@ public class TransactionControllerGraphQL {
     }    
 
     @MutationMapping
-    public Mono<Transaction> createTransaction(@Argument Mono<Order> orderMono) {
-        return orderMono
-        .switchIfEmpty(Mono.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Order body is missing"
-            )))
-        .flatMap(transaction -> {
-            logger.info("Request received to transaction from: {} with price: {}", transaction.getName(), transaction.getTotalPrice());
-            return transactionService.createTransaction(transaction);
-        });        
+    public Mono<Transaction> createTransaction(@Argument("order") OrderInputDTO orderMono) {
+        logger.info("Request received to transaction from: {} with price: {}", transaction.getName(), transaction.getTotalPrice());
+        return transactionService.createTransaction(orderMono);      
     }
 }

@@ -10,8 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.transaction.model.Order;
+import com.ecommerce.transaction.model.dto.OrderInputDTO;
 import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.repository.TransactionRepository;
+
+import com.ecommerce.transaction.config.OrderMapper;
+
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,13 +29,16 @@ public class TransactionService {
     
     private final TransactionRepository transactionRepository;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
+    private final OrderMapper orderMapper;
 
     public TransactionService(TransactionRepository transactionRepository,                        
-                        R2dbcEntityTemplate template
+                        R2dbcEntityTemplate template,
+                        OrderMapper orderMapper
                         ) 
         {
         this.transactionRepository = transactionRepository;
         r2dbcEntityTemplate = template;    
+        this.orderMapper = orderMapper;
     }
 
     public Flux<Transaction> getAllTransactions() {        
@@ -63,7 +70,7 @@ public class TransactionService {
             });
     }
 
-    public Mono<Transaction> createTransaction(Order order) {
+    public Mono<Transaction> createTransaction(OrderInputDTO order) {
         logger.info("Creating new transaction reactive: {}", order.getId());
         if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
             logger.warn("Transaction request is empty or invalid.");

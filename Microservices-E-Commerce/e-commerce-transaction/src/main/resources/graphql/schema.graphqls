@@ -1,66 +1,66 @@
-"""
-Represents a Transaction in database
-"""
-type Transaction{
-    id: ID!
-    name: String!    
-    totalPrice: Float
-    orderId: ID!
-}
+    """
+    Represents a Transaction in database
+    """
+    type Transaction{
+        id: ID!
+        name: String!    
+        totalPrice: Float
+        orderId: ID!
+    }
 
-"""
-Represents a order product request (return)
-"""
-type Order {
-    id: ID
-    name: String
-    productsQuantity: [ProductQuantity]   # ✔ Output Type
-    totalPrice: Float
-}
+    """
+    Represents a order product request (return)
+    """
+    type Order {
+        id: ID
+        name: String
+        productsQuantity: [ProductQuantity]   # ✔ Output Type
+        totalPrice: Float
+    }
 
-"""
-Represents the product quantity of an Order(return)
-"""
-type ProductQuantity {
-    productId: ID!
-    quantity: Int!
-}
+    """
+    Represents the product quantity of an Order(return)
+    """
+    type ProductQuantity {
+        productId: ID!
+        quantity: Int!
+    }
 
 
-"""
-Input of a ProductQuantity (input)
-"""
-input ProductQuantityInput {
-    productId: ID!
-    quantity: Int!
-}
+    """
+    Input of a ProductQuantity (input)
+    """
+    input ProductQuantityInput {
+        productId: ID!
+        quantity: Int!
+    }
 
-# ===============================
-# QUERIES (GET)
-# ===============================
-type Query {
-    getAllTransactions: [Transaction]
-    getTransactionById(id: ID!): Transaction
-    getTransactionByOrderId(id: ID!): [Transaction]
-}
+    # ===============================
+    # QUERIES (GET)
+    # ===============================
+    type Query {
+        getAllTransactions: [Transaction]
+        getTransactionById(id: ID!): Transaction
+        getTransactionByOrderId(id: ID!): [Transaction]
+    }
 
-# ===============================
-# MUTATIONS (POST/PUT/DELETE)
-# ===============================
-type Mutation {
-    createTransaction(order: OrderInput!): Transaction    
-}
+    # ===============================
+    # MUTATIONS (POST/PUT/DELETE)
+    # ===============================
+    type Mutation {
+        createTransaction(order: OrderInput!): Transaction
+    }
 
-# ===============================
-# INPUTS
-# ===============================
+    # ===============================
+    # INPUTS
+    # ===============================
 
-"""
-Order Input representation
-"""
-input OrderInput {
-    id: ID
-    name: String
-    productsQuantity: [ProductQuantityInput]  # ✔ Output Type
-    totalPrice: Float
-}
+    """
+    Order Input representation
+    """
+    input OrderInput {
+        id: ID
+        name: String
+        productsQuantity: [ProductQuantityInput]  # ✔ Output Type
+        totalPrice: Float
+    }
