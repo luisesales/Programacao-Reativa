@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
+import com.ecommerce.stock.model.dto.ProductInputDTO;
 import com.ecommerce.stock.service.ProductService;
 
 import reactor.core.publisher.Flux;
@@ -57,7 +58,7 @@ public class ProductControllerGraphQL {
     }
 
     @MutationMapping
-    public Mono<Product> updateProduct(@Argument UUID id, @Argument Product monoProductDetails) {
+    public Mono<Product> updateProduct(@Argument UUID id, @Argument("product") ProductInputDTO monoProductDetails) {
         logger.info("Request received to update product with id: {}", id);
         return productService.updateProduct(id, monoProductDetails);
     }
@@ -70,7 +71,7 @@ public class ProductControllerGraphQL {
     }
 
     @MutationMapping
-    public Flux<OrderResult> orderProduct(@Argument Mono<Order> monoOrder) {
+    public Flux<OrderResult> orderProduct(@Argument Order monoOrder) {
         return monoOrder
             .switchIfEmpty(Mono.error(new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,

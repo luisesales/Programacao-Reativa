@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
+import com.ecommerce.stock.model.dto.ProductInputDTO;
 import com.ecommerce.stock.service.ProductService;
 
 import reactor.core.publisher.Flux;
@@ -72,7 +73,7 @@ public class ProductController {
     }
 
     @PutMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<Product> updateProduct(@PathVariable UUID id, @RequestBody Mono<Product> monoProductDetails) {
+    public Mono<Product> updateProduct(@PathVariable UUID id, @RequestBody Mono<ProductInputDTO> monoProductDetails) {
         return monoProductDetails
             .switchIfEmpty(Mono.error(new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,

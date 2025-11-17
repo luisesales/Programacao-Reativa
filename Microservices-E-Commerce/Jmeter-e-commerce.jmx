@@ -108,7 +108,7 @@
           </collectionProp>
         </kg.apc.jmeter.vizualizers.CompositeResultCollector>
         <hashTree/>
-        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ThreadsStateOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Active Threads Over Time">
+        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ThreadsStateOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Active Threads Over Time" enabled="true">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -346,8 +346,8 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="UpdateProduct" enabled="false">
-          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/21ff9d0f-7bb4-4b3a-a7eb-f8a4eb4df2eb</stringProp>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="UpdateProduct">
+          <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products/4686ad27-bbfe-45af-8e65-fb33858be915</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">PUT</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -357,11 +357,11 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-  &quot;name&quot;: &quot;Notebook Vision R15&quot;,&#xd;
-  &quot;description&quot;: &quot;Um notebook da Positivo de Linux com Ryzen 7 6700U, 8gb de RAM e um SSD NVMe M2 de 512GB&quot;,&#xd;
-  &quot;price&quot;: 3100,&#xd;
-  &quot;stockQuantity&quot; : 25,&#xd;
-  &quot;category&quot; : &quot;Tecnologia&quot;&#xd;
+  &quot;name&quot;: &quot;Café Expresso Premium Mod&quot;,&#xd;
+  &quot;description&quot;: &quot;Grãos selecionados torrados artesanalmente&quot;,&#xd;
+  &quot;price&quot;: 19.90,&#xd;
+  &quot;category&quot;: &quot;Bebidas&quot;,&#xd;
+  &quot;stockQuantity&quot;: 350&#xd;
 }&#xd;
 </stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
@@ -516,7 +516,7 @@
           </HeaderManager>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetTransactionsByOrderId">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetTransactionsByOrderId" enabled="false">
           <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-transaction/transactions/order/7e5e6c0f-6692-48bd-a3c8-ff41bc82d4ff</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>

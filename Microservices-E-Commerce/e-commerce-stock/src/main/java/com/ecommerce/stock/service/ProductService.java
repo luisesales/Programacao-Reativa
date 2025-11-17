@@ -12,13 +12,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.ecommerce.stock.config.ProductMapper;
 import com.ecommerce.stock.model.Order;
 import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
+import com.ecommerce.stock.model.dto.ProductInputDTO;
 import com.ecommerce.stock.repository.ProductCacheRepository;
 import com.ecommerce.stock.repository.ProductRepository;
-
-import com.ecommerce.stock.config.ProductMapper;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,6 +28,7 @@ public class ProductService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
+    private final ProductMapper productMapper;
     private final ProductRepository productRepository;
     private final RedissonReactiveClient redissonClient;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
@@ -36,11 +37,13 @@ public class ProductService {
     public ProductService(ProductRepository repo, 
                           RedissonReactiveClient redissonClient, 
                           ProductCacheRepository cache,
-                          R2dbcEntityTemplate template) {
+                          R2dbcEntityTemplate template,
+                          ProductMapper productMapper) {
         this.productRepository = repo;
         this.redissonClient = redissonClient;
         this.cache = cache;
         this.r2dbcEntityTemplate = template;
+        this.productMapper = productMapper;
     }
 
     
@@ -89,35 +92,49 @@ public class ProductService {
                 return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Product with message: " + e.getMessage(), e));
             });
     }                        
-    
-    public Mono<Product> updateProduct(UUID id, Product productDetails) {
-        if (productDetails == null) return Mono.error(new ResponseStatusException(
-            HttpStatus.BAD_REQUEST,
-            "Product details body is missing"
+
+    public Mono<Product> updateProduct(UUID id, ProductInputDTO productDetails) {
+        if (productDetails == null) {
+            return Mono.error(new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Request body is missing"
             ));
-        if (productDetails.getName() == null &&
-            productDetails.getDescription().isBlank() &&
-            productDetails.getPrice() < 0 &&
-            productDetails.getCategory() == null &&
-            productDetails.getStockQuantity() < 0) {
-            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty update payload"));
         }
-        logger.info("Updating product with id: {}", id);
+
+        if (productDetails.name() == null &&
+            productDetails.description() == null &&
+            productDetails.price() == null &&
+            productDetails.category() == null &&
+            productDetails.stockQuantity() == null) {
+
+            return Mono.error(new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "At least one field must be provided for update"
+            ));
+        }
+
+        logger.info("Updating product {}", id);
+
         return productRepository.findById(id)
-                .flatMap(existing -> {
-                    productMapper.updateProductFromInput(productDetails, existing);
-                    return productRepository.save(existing)
-                        .flatMap(updated -> cache.save(updated).thenReturn(updated));
-                })
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for update.", id);
                     return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
+                .flatMap(existing -> {
+
+                    productMapper.updateProductFromInput(productDetails, existing);
+
+                    return productRepository.save(existing)
+                            .flatMap(updated ->
+                                    cache.save(updated).thenReturn(updated)
+                            );
+                })
+                .doOnSuccess(p -> logger.info("Updated product {}", p.getId()))
                 .onErrorResume(e -> {
                     logger.error("Error updating product: {}", e.getMessage(), e);
                     return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Updating Product with message: " + e.getMessage(), e));
                 });
     }
+
 
     public Mono<String> deleteProduct(UUID id) {
     logger.info("Deleting product with id: {}", id);
