@@ -5,17 +5,11 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.stereotype.Controller;
 
-
-
-import com.ecommerce.transaction.model.Order;
 import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.model.dto.OrderInputDTO;
 import com.ecommerce.transaction.service.TransactionService;
@@ -52,7 +46,7 @@ public class TransactionControllerGraphQL {
 
     @MutationMapping
     public Mono<Transaction> createTransaction(@Argument("order") OrderInputDTO orderMono) {
-        logger.info("Request received to transaction from: {} with price: {}", transaction.getName(), transaction.getTotalPrice());
+        logger.info("Request received to transaction from: {} with price: {}", orderMono.name(), orderMono.totalPrice());
         return transactionService.createTransaction(orderMono);      
     }
 }

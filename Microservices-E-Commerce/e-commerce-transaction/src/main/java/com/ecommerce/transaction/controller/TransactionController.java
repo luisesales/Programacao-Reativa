@@ -15,8 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.ecommerce.transaction.model.Order;
 import com.ecommerce.transaction.model.Transaction;
+import com.ecommerce.transaction.model.dto.OrderInputDTO;
+import com.ecommerce.transaction.model.Order;
 import com.ecommerce.transaction.service.TransactionService;
 
 import reactor.core.publisher.Flux;
@@ -54,15 +55,21 @@ public class TransactionController {
     }
 
     @PostMapping
-    public Mono<Transaction> createTransaction(@RequestBody Mono<Order> orderMono) {
+    public Mono<Transaction> createTransaction(@RequestBody Mono<OrderInputDTO> orderMono) {
         return orderMono
         .switchIfEmpty(Mono.error(new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Order body is missing"
             )))
-        .flatMap(transaction -> {
-            logger.info("Request received to transaction from: {} with price: {}", transaction.getName(), transaction.getTotalPrice());
-            return transactionService.createTransaction(transaction);
+        .flatMap(orderInput -> {
+        //     OrderInputDTO dto = new OrderInputDTO(
+        //     orderInput.getId(),
+        //     orderInput.getName(),
+        //     orderInput.getProductsQuantity(),
+        //     orderInput.getTotalPrice()
+        // );
+            logger.info("Request received to transaction from: {} with price: {}", orderInput.name(), orderInput.totalPrice());
+            return transactionService.createTransaction(dto);
         });        
     }
 }

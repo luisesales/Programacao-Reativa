@@ -9,13 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.ecommerce.transaction.model.Order;
-import com.ecommerce.transaction.model.dto.OrderInputDTO;
 import com.ecommerce.transaction.model.Transaction;
+import com.ecommerce.transaction.model.dto.OrderInputDTO;
 import com.ecommerce.transaction.repository.TransactionRepository;
-
-import com.ecommerce.transaction.config.OrderMapper;
-
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,16 +25,15 @@ public class TransactionService {
     
     private final TransactionRepository transactionRepository;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
-    private final OrderMapper orderMapper;
+//    private final OrderMapper orderMapper;
 
     public TransactionService(TransactionRepository transactionRepository,                        
-                        R2dbcEntityTemplate template,
-                        OrderMapper orderMapper
+                        R2dbcEntityTemplate template  
                         ) 
         {
         this.transactionRepository = transactionRepository;
         r2dbcEntityTemplate = template;    
-        this.orderMapper = orderMapper;
+        //this.orderMapper = orderMapper;
     }
 
     public Flux<Transaction> getAllTransactions() {        
@@ -71,19 +66,30 @@ public class TransactionService {
     }
 
     public Mono<Transaction> createTransaction(OrderInputDTO order) {
-        logger.info("Creating new transaction reactive: {}", order.getId());
-        if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
+        if (order == null) {
             logger.warn("Transaction request is empty or invalid.");
             return Mono.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Invalid transaction request: missing products."
+                    HttpStatus.BAD_REQUEST, "Request body is missing"
             ));
         }
-        logger.info("Order processed successfully for products: {}", order.getProductsQuantity());        
+        if(
+            order.name() == null || 
+            order.id() == null || 
+            order.productsQuantity() == null ||
+            order.totalPrice() == null
+        )
+        {
+            logger.warn("Transaction request is empty or invalid.");
+            return Mono.error(new ResponseStatusException(                
+                    HttpStatus.BAD_REQUEST, "Invalid request body: missing required fields"
+            ));
+        }
+        logger.info("Creating new transaction reactive: {}", order.id());    
+        logger.info("Order processed successfully for products: {}", order.productsQuantity());        
         return transactionRepository.save(new Transaction(                
-                order.getName(),                
-                order.getTotalPrice(),
-                order.getId()
+                order.name(),                
+                order.totalPrice(),
+                order.id()
             ))
             .flatMap(savedTransaction -> {                                                        
                 logger.info("Transaction created with id: {}", savedTransaction.getId());
@@ -93,7 +99,7 @@ public class TransactionService {
                 logger.error("Error creating Transaction: {}", e.getMessage(), e);
                 return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
             }).doOnSuccess(e -> {
-                logger.info("Transaction created successfully with order id: {}", order.getId());
+                logger.info("Transaction created successfully with order id: {}", order.id());
             });  
     }                                                  
 } 
