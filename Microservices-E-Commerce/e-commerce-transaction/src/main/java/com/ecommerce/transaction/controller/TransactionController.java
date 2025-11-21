@@ -62,14 +62,8 @@ public class TransactionController {
                 "Order body is missing"
             )))
         .flatMap(orderInput -> {
-        //     OrderInputDTO dto = new OrderInputDTO(
-        //     orderInput.getId(),
-        //     orderInput.getName(),
-        //     orderInput.getProductsQuantity(),
-        //     orderInput.getTotalPrice()
-        // );
             logger.info("Request received to transaction from: {} with price: {}", orderInput.name(), orderInput.totalPrice());
-            return transactionService.createTransaction(dto);
+            return transactionService.createTransaction(orderInput);
         });        
     }
 }

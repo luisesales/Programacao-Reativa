@@ -67,8 +67,7 @@ type Mutation {
 """
 Order Input representation
 """
-input OrderInput {
-    id: ID
+input OrderInput {    
     name: String
     productsQuantity: [ProductQuantityInput]  # ✔ Output Type
     totalPrice: Float

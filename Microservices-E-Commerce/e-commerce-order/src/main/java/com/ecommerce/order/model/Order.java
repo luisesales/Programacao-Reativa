@@ -33,6 +33,12 @@ public class Order{
         this.totalPrice = 0.0;
     }
 
+    public Order(String name, double totalPrice, HashMap<UUID,Integer> productsQuantity){
+        this.name = name;
+        this.totalPrice = totalPrice;
+        this.productsQuantity = productsQuantity;
+    }
+
     public UUID getId() {
         return id;
     }

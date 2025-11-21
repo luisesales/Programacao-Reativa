@@ -56,9 +56,9 @@ public class OrderController {
     }
 
     
-    @GetMapping(path = "/products", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(path = "/products/category", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<Product> getProductsByCategory(@RequestParam String category) {
-        return orderService.getProducts();
+        return orderService.getProductsByCategory();
     }
 
     @PostMapping

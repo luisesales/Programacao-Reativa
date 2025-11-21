@@ -25,15 +25,13 @@ public class TransactionService {
     
     private final TransactionRepository transactionRepository;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
-//    private final OrderMapper orderMapper;
 
     public TransactionService(TransactionRepository transactionRepository,                        
                         R2dbcEntityTemplate template  
                         ) 
         {
         this.transactionRepository = transactionRepository;
-        r2dbcEntityTemplate = template;    
-        //this.orderMapper = orderMapper;
+        r2dbcEntityTemplate = template;            
     }
 
     public Flux<Transaction> getAllTransactions() {        

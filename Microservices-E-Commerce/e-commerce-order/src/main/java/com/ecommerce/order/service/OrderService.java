@@ -2,7 +2,9 @@ package com.ecommerce.order.service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,8 @@ import com.ecommerce.order.model.OrderItem;
 import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.model.Product;
 import com.ecommerce.order.model.dto.OrderDTO;
+import com.ecommerce.order.model.dto.OrderInputDTO;
+import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 import com.ecommerce.order.repository.OrderItemRepository;
 import com.ecommerce.order.repository.OrderRepository;
 
@@ -108,6 +112,54 @@ public class OrderService {
                                 Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Retrieving Order with id "+ id + " message: " + e.getMessage(), e));
             });
         }
+
+    public Flux<Product> getProducts() {
+        logger.info("Fetching products from Product Service");
+        return productHttpInterface.getAllProducts().onErrorResume(e -> {
+            logger.error("Error Returning Products from Product Service: {}", e.getMessage(), e);
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
+        });   
+    }
+
+    public Flux<Product> getProductsByCategory(String category) {
+        logger.info("Fetching products from Product Service by category: {}", category);
+        return productHttpInterface.getProductsByCategory(category).onErrorResume(e -> {
+            logger.error("Error Returning Products from Product Service by category {}: {}", category, e.getMessage(), e);
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products by category Service is not available", e));
+        });   
+    }
+
+    public Flux<OrderResult> createOrderDTO(OrderInputDTO order) {
+        if (order == null) {
+            logger.warn("Order request is empty or invalid.");
+            return Flux.error(new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Request body is missing"
+            ));
+        }
+        if(
+            order.name() == null ||             
+            order.productsQuantity() == null ||
+            order.totalPrice() == null
+        )
+        {
+            logger.warn("Order request is empty or invalid.");
+            return Flux.error(new ResponseStatusException(                
+                    HttpStatus.BAD_REQUEST, "Invalid request body: missing required fields"
+            ));
+        }        
+
+        return createOrder(new Order
+            (                                
+                order.name(),                
+                order.totalPrice(),
+                new HashMap(order.productsQuantity().stream()
+                .collect(Collectors.toMap(
+                    ProductQuantityInputDTO::productId,
+                    ProductQuantityInputDTO::quantity
+                )))
+            )
+        );        
+    }
 
     public Flux<OrderResult> createOrder(Order order) {
         logger.info("Creating new order reactive: {}", order.getId());

@@ -21,6 +21,7 @@ import org.springframework.graphql.data.method.annotation.MutationMapping;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.model.Product;
+import com.ecommerce.order.model.dto.OrderInputDTO;
 import com.ecommerce.order.model.dto.OrderDTO;
 import com.ecommerce.order.service.OrderService;
 
@@ -59,19 +60,12 @@ public class OrderControllerGraphQL {
     
     @QueryMapping
     public Flux<Product> getProductsByCategory(@Argument String category) {
-        return orderService.getProducts();
+        return orderService.getProductsByCategory();
     }
 
     @MutationMapping
-    public Flux<OrderResult> createOrder(@Argument Mono<Order> orderMono) {
-        return orderMono
-        .switchIfEmpty(Mono.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Order body is missing"
-            )))
-        .flatMapMany(order -> {
-            logger.info("Request received to order products: {} with price: {}",order.getName(), order.getTotalPrice());            
-            return orderService.createOrder(order);
-        });        
+    public Flux<OrderResult> createOrder(@Argument OrderInputDTO order) {        
+        logger.info("Request received to order products: {} with price: {}",order.name(), order.totalPrice());            
+        return orderService.createOrderDTO(order);        
     }
 }
