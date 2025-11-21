@@ -1,0 +1,13 @@
+package com.ecommerce.order.model.saga;
+
+public enum SagaState {
+    ORDER_CREATED,
+    TRANSACTION_REQUESTED,
+    TRANSACTION_CONFIRMED,
+    TRANSACTION_FAILED,
+    STOCK_REQUESTED,
+    STOCK_RESERVED,
+    STOCK_FAILED,
+    ORDER_COMPLETED,
+    ORDER_COMPENSATED;
+}
