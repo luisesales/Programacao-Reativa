@@ -12,3 +12,24 @@ CREATE TABLE order_items (
     product_id UUID NOT NULL,
     quantity INT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS saga_instance (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    order_id UUID NOT NULL,
+    state VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    version BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS saga_context (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    total_price DOUBLE PRECISION NOT NULL,
+    transaction_id UUID,
+    stock_reservation_id UUID,
+    saga_id UUID NOT NULL UNIQUE,
+    CONSTRAINT fk_saga_context_saga
+        FOREIGN KEY (saga_id)
+        REFERENCES saga_instance(id)
+        ON DELETE CASCADE
+);

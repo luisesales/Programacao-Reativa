@@ -14,11 +14,12 @@ import jakarta.validation.constraints.NotEmpty;
 @Table("saga_instance")
 public class SagaInstance {
     @Id
+    @Column("id")
     private UUID sagaId;
 
     @NotBlank(message="Order ID is necessary")
     @Column("order_id")
-    private String orderId;
+    private UUID orderId;
 
     @Column("state")
     private SagaState state;
