@@ -2,7 +2,6 @@ package com.ecommerce.order.service;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -112,22 +111,6 @@ public class OrderService {
                                 Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Retrieving Order with id "+ id + " message: " + e.getMessage(), e));
             });
         }
-
-    public Flux<Product> getProducts() {
-        logger.info("Fetching products from Product Service");
-        return productHttpInterface.getAllProducts().onErrorResume(e -> {
-            logger.error("Error Returning Products from Product Service: {}", e.getMessage(), e);
-            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
-        });   
-    }
-
-    public Flux<Product> getProductsByCategory(String category) {
-        logger.info("Fetching products from Product Service by category: {}", category);
-        return productHttpInterface.getProductsByCategory(category).onErrorResume(e -> {
-            logger.error("Error Returning Products from Product Service by category {}: {}", category, e.getMessage(), e);
-            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products by category Service is not available", e));
-        });   
-    }
 
     public Flux<OrderResult> createOrderDTO(OrderInputDTO order) {
         if (order == null) {
