@@ -33,3 +33,15 @@ CREATE TABLE IF NOT EXISTS saga_context (
         REFERENCES saga_instance(id)
         ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS saga_context_products_quantity (
+    id UUID PRIMARY KEY,
+    saga_context_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    quantity INT NOT NULL,
+
+    CONSTRAINT fk_saga_ctx_product
+        FOREIGN KEY (saga_context_id)
+        REFERENCES saga_context(id)
+        ON DELETE CASCADE
+);
