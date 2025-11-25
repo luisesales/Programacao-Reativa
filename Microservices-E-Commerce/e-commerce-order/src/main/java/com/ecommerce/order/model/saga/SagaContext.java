@@ -32,7 +32,7 @@ public class SagaContext {
         this.totalPrice = 0.0;
     }
 
-    public void settotalPrice(double totalPrice) {
+    public void setTotalPrice(double totalPrice) {
         this.totalPrice = totalPrice;
     }
     public void setTransactionId(UUID transactionId){

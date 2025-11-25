@@ -51,10 +51,10 @@ public class SagaInstance {
         this.sagaId = sagaId; 
     }
 
-    public String getOrderId() { 
+    public UUID getOrderId() { 
         return orderId; 
     }
-    public void setOrderId(String orderId) { 
+    public void setOrderId(UUID orderId) { 
         this.orderId = orderId; 
     }
 
@@ -65,6 +65,10 @@ public class SagaInstance {
 
     public void setContext(SagaContext context) { 
         this.context = context; 
+    }
+
+    public void setUpdatedAt(Instant updatedAt) { 
+        this.updatedAt = updatedAt; 
     }
 
     public SagaContext getContext() { 
