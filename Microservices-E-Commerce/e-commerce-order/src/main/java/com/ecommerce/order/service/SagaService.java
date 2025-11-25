@@ -82,7 +82,6 @@ public class SagaService {
             .flatMap(saga -> {                
                 if (saga.getState() == newState) return Mono.just(saga);
 
-                // apply extra context changes
                 if (mutator != null) mutator.accept(saga);
                 saga.setState(newState);
                 saga.setUpdatedAt(Instant.now());
