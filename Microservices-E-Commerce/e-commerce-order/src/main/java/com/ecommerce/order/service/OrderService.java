@@ -40,17 +40,20 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final ProductHttpInterface productHttpInterface;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
+    private final SagaService sagaService;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         ProductHttpInterface productHttpInterface,
-                        R2dbcEntityTemplate template
+                        R2dbcEntityTemplate template,
+                        SagaService sagaService
                         ) 
         {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productHttpInterface = productHttpInterface;    
-        r2dbcEntityTemplate = template;    
+        r2dbcEntityTemplate = template;   
+        this.sagaService = sagaService; 
     }
 
     public Flux<Order> getAllOrders() {        
@@ -111,6 +114,22 @@ public class OrderService {
                                 Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Retrieving Order with id "+ id + " message: " + e.getMessage(), e));
             });
         }
+
+    public Flux<Product> getProducts() {
+        logger.info("Fetching products from Product Service");
+        return productHttpInterface.getAllProducts().onErrorResume(e -> {
+            logger.error("Error Returning Products from Product Service: {}", e.getMessage(), e);
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
+        });   
+    }
+
+    public Flux<Product> getProductsByCategory(String category) {
+        logger.info("Fetching products from Product Service by category: {}", category);
+        return productHttpInterface.getProductsByCategory(category).onErrorResume(e -> {
+            logger.error("Error Returning Products from Product Service by category {}: {}", category, e.getMessage(), e);
+            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products by category Service is not available", e));
+        });   
+    }
 
     public Flux<OrderResult> createOrderDTO(OrderInputDTO order) {
         if (order == null) {
@@ -187,7 +206,8 @@ public class OrderService {
                         logger.info("Order created successfully with id: {}", order.getId());
                     });
                                                     
-            })        
+            })      
+              
             .onErrorResume(e -> {
                 logger.error("Error creating order: {}", e.getMessage());
                 OrderResult errorResult = new OrderResult(false, "Error creating order: " + e.getMessage(), new Product());            
@@ -196,6 +216,8 @@ public class OrderService {
                 );                       
             });   
     }
+
+    
 
 
 
@@ -241,22 +263,6 @@ public class OrderService {
                                              logger.error(msg + " Error: {}", ex.getMessage(), ex);
                                              return Mono.just(false);
                                          }));
-    }
-
-    public Flux<Product> getProducts() {
-        logger.info("Fetching products from Product Service");
-        return productHttpInterface.getAllProducts().onErrorResume(e -> {
-            logger.error("Error Returning Products from Product Service: {}", e.getMessage(), e);
-            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products Service is not available", e));
-        });   
-    }
-
-    public Flux<Product> getProductsByCategory(String category) {
-        logger.info("Fetching products from Product Service by category: {}", category);
-        return productHttpInterface.getProductsByCategory(category).onErrorResume(e -> {
-            logger.error("Error Returning Products from Product Service by category {}: {}", category, e.getMessage(), e);
-            return Flux.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Error Returning Products by category Service is not available", e));
-        });   
     }
 } 
     

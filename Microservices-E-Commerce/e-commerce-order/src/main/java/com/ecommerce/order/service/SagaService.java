@@ -4,12 +4,17 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.order.component.EventPublisher;
+import com.ecommerce.order.event.order.OrderCancelled;
+import com.ecommerce.order.event.order.OrderCompleted;
+import com.ecommerce.order.event.order.OrderCreated;
+import com.ecommerce.order.event.stock.StockRejected;
+import com.ecommerce.order.event.stock.StockReserved;
+import com.ecommerce.order.event.transaction.TransactionApproved;
+import com.ecommerce.order.event.transaction.TransactionRejected;
 import com.ecommerce.order.model.Order;
-import com.ecommerce.order.model.dto.OrderCreatedEventDTO;
 import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 import com.ecommerce.order.model.saga.SagaContext;
 import com.ecommerce.order.model.saga.SagaInstance;
@@ -17,35 +22,30 @@ import com.ecommerce.order.model.saga.SagaState;
 import com.ecommerce.order.repository.SagaRepository;
 
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 @Service
 public class SagaService {
 
     private final SagaRepository sagaRepository;
-    private final StreamBridge streamBridge;
+    private final EventPublisher eventPublisher;
 
-    private static final String ORDER_CREATED_BINDING = "orderCreated-out-0";
-
-    @Autowired
-    public SagaService(SagaRepository sagaRepository, StreamBridge streamBridge) {
+    public SagaService(SagaRepository sagaRepository, EventPublisher eventPublisher) {
         this.sagaRepository = sagaRepository;
-        this.streamBridge = streamBridge;
+        this.eventPublisher = eventPublisher;
     }
 
     public Mono<SagaInstance> startSagaForOrderReactive(Order order) {
         UUID orderId = order.getId();
-        
+
         return sagaRepository.findByOrderId(orderId)
             .switchIfEmpty(createAndPublishSaga(order));
     }
 
-    public Mono<SagaInstance> createAndPublishSaga(Order order) {
+    private Mono<SagaInstance> createAndPublishSaga(Order order) {
 
-        SagaInstance saga = new SagaInstance();        
+        SagaInstance saga = new SagaInstance();
         saga.setOrderId(order.getId());
         saga.setState(SagaState.ORDER_CREATED);
-        
 
         SagaContext context = new SagaContext(saga.getSagaId());
         context.setTotalPrice(order.getTotalPrice());
@@ -58,34 +58,99 @@ public class SagaService {
 
         return sagaRepository.save(saga)
             .flatMap(saved -> {
-                OrderCreatedEventDTO event = new OrderCreatedEventDTO(
-                    saved.getSagaId(),
-                    saved.getOrderId(),
-                    context.getTotalPrice(),
-                    context.getProductsQuantity()
+                OrderCreated event = new OrderCreated(
+                        saved.getSagaId(),
+                        saved.getOrderId(),
+                        saved.getContext().getName(),
+                        context.getTotalPrice(),
+                        context.getProductsQuantity()
                 );
+
                 
-                return Mono.fromCallable(() -> streamBridge.send(ORDER_CREATED_BINDING, event))
-                           .subscribeOn(Schedulers.boundedElastic())
-                           .flatMap(sent -> {
-                               if (Boolean.FALSE.equals(sent)) {                                   
-                                   saved.setState(SagaState.TRANSACTION_FAILED); // example error state
-                                   return sagaRepository.save(saved).thenReturn(saved);
-                               }                               
-                               return Mono.just(saved);
-                           });
+                eventPublisher.publish(event);
+
+                return Mono.just(saved);
             });
     }
 
-    public Mono<SagaInstance> transitionState(UUID sagaId, SagaState newState, Consumer<SagaInstance> mutator) {
+
+    public Mono<SagaInstance> transitionState(
+            UUID sagaId,
+            SagaState newState,
+            Consumer<SagaInstance> mutator
+    ) {
         return sagaRepository.findById(sagaId)
-            .flatMap(saga -> {                
+            .flatMap(saga -> {
+
+                // idempotência
                 if (saga.getState() == newState) return Mono.just(saga);
 
+                // atualiza context se necessário
                 if (mutator != null) mutator.accept(saga);
+
                 saga.setState(newState);
                 saga.setUpdatedAt(Instant.now());
+
                 return sagaRepository.save(saga);
             });
     }
+
+    public Mono<SagaInstance> onOrderCreated(OrderCreated event) {
+        return transitionState(
+            event.sagaId(),
+            SagaState.ORDER_CREATED,
+            null
+        );
+    }
+    public Mono<SagaInstance> onTransactionApproved(TransactionApproved event) {
+        return transitionState(
+            event.sagaId(),
+            SagaState.TRANSACTION_CONFIRMED,
+            null
+        );
+    }
+    public Mono<SagaInstance> onTransactionRejected(TransactionRejected event) {
+        return transitionState(
+            event.sagaId(),
+            SagaState.TRANSACTION_FAILED,
+            null
+        );
+    }
+    public Mono<SagaInstance> onStockReserved(StockReserved event) {
+        return transitionState(
+            event.sagaId(),
+            SagaState.STOCK_RESERVED,
+            null
+        );
+    }
+    public Mono<SagaInstance> onStockRejected(StockRejected event) {
+        return transitionState(
+            event.sagaId(),
+            SagaState.STOCK_FAILED,
+            null
+        );
+    }
+    public Mono<SagaInstance> onOrderCompleted(OrderCompleted event) {
+        return transitionState(
+            event.sagaId(),
+            SagaState.ORDER_COMPLETED,
+            null
+        );
+    }
+    public Mono<SagaInstance> onOrderCancelled(OrderCancelled event) {
+        return transitionState(
+            event.sagaId(),
+            SagaState.ORDER_COMPENSATED,
+            null
+        );
+    }
+    public Mono<SagaInstance> findById(UUID sagaId) {
+        return sagaRepository.findById(sagaId);
+    }
+    public Mono<SagaInstance> findByOrderId(UUID orderId) {
+        return sagaRepository.findByOrderId(orderId);
+    }
+    // public Mono<SagaInstance> save(SagaInstance saga) {
+    //     return sagaRepository.save(saga);
+    // }
 }

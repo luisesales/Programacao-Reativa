@@ -13,13 +13,15 @@ public class SagaContext {
 
     @Id
     private UUID id;
+    private String name;
     private double totalPrice;
     private UUID transactionId;
     private UUID stockReservationId;
     private List<ProductQuantityInputDTO> productsQuantity;
     private UUID sagaId;
 
-    public SagaContext(double totalPrice, UUID transactionId, UUID stockReservationId, List<ProductQuantityInputDTO> productsQuantity, UUID sagaId){
+    public SagaContext(String name, double totalPrice, UUID transactionId, UUID stockReservationId, List<ProductQuantityInputDTO> productsQuantity, UUID sagaId){
+        this.name = name;
         this.totalPrice = totalPrice;
         this.transactionId = transactionId;
         this.stockReservationId = stockReservationId;
@@ -30,6 +32,9 @@ public class SagaContext {
     public SagaContext(UUID sagaId){
         this.sagaId = sagaId;
         this.totalPrice = 0.0;
+    }
+    public void setName(String name){
+        this.name = name;
     }
 
     public void setTotalPrice(double totalPrice) {
@@ -49,6 +54,7 @@ public class SagaContext {
     }
 
     public UUID getId(){ return id; }
+    public String getName(){ return name; }
     public double getTotalPrice() { return totalPrice; }
     public UUID getTransactionId() { return transactionId; }
     public UUID getStockReservationId() { return stockReservationId; }

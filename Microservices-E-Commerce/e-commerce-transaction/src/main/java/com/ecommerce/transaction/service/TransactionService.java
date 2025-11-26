@@ -9,9 +9,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.ecommerce.transaction.event.transaction.TransactionApproved;
+import com.ecommerce.transaction.event.transaction.TransactionRejected;
+import com.ecommerce.transaction.event.transaction.TransactionRequested;
 import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.model.dto.OrderInputDTO;
 import com.ecommerce.transaction.repository.TransactionRepository;
+
+import com.ecommerce.transaction.component.EventPublisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,13 +30,16 @@ public class TransactionService {
     
     private final TransactionRepository transactionRepository;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
+    private final EventPublisher eventPublisher;
 
     public TransactionService(TransactionRepository transactionRepository,                        
-                        R2dbcEntityTemplate template  
+                        R2dbcEntityTemplate template,
+                        EventPublisher eventPublisher  
                         ) 
         {
         this.transactionRepository = transactionRepository;
-        r2dbcEntityTemplate = template;            
+        r2dbcEntityTemplate = template; 
+        this.eventPublisher = eventPublisher;           
     }
 
     public Flux<Transaction> getAllTransactions() {        
@@ -99,6 +107,41 @@ public class TransactionService {
             }).doOnSuccess(e -> {
                 logger.info("Transaction created successfully with order id: {}", order.id());
             });  
-    }                                                  
+    } 
+    
+    public Mono<Void> handle(TransactionRequested event) {
+        logger.info("Processing transaction for order {} (saga: {})",
+                event.orderId(), event.sagaId());
+
+        return transactionRepository.save(
+                new Transaction(
+                        event.name(),
+                        event.orderId(),
+                        event.totalPrice()
+                )
+        ).flatMap(saved -> {
+            logger.info("Transaction saved (id {}) for order {}", saved.getId(), saved.getOrderId());
+
+            boolean approved = isPaymentApproved(event);
+
+            if (approved) {
+                eventPublisher.publish(
+                    new TransactionApproved(event.sagaId(), event.orderId(), saved.getId())
+                );
+                logger.info("Transaction APPROVED for order {}", event.orderId());
+            } else {
+                eventPublisher.publish(
+                    new TransactionRejected(event.sagaId(), event.orderId(), "Insufficient balance")
+                );
+                logger.info("Transaction REJECTED for order {}", event.orderId());
+            }
+
+            return Mono.empty();
+        });
+    }
+
+    private boolean isPaymentApproved(TransactionRequested event) {        
+        return event.totalPrice() < 10000.0;
+    }
 } 
     

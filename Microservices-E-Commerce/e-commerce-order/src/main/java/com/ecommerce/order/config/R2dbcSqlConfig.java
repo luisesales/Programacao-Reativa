@@ -1,4 +1,4 @@
-// package com.ecommerce.order.config;
+/ package com.ecommerce.order.config;
 
 // import org.springframework.boot.ApplicationRunner;
 // import org.springframework.context.annotation.Bean;
