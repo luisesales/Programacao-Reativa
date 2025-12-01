@@ -1,6 +1,4 @@
-package com.ecommerce.order.event.stock;
-
-import com.ecommerce.order.event.DomainEvent;
+package com.ecommerce.order.event;
 
 public sealed interface StockEvent extends DomainEvent
     permits StockRequested, StockReserved, StockRejected {}

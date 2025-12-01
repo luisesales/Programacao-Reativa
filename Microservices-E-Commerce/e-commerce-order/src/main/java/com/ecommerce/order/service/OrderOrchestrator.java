@@ -4,15 +4,15 @@ import org.springframework.stereotype.Service;
 
 import com.ecommerce.order.component.EventPublisher;
 import com.ecommerce.order.event.DomainEvent;
-import com.ecommerce.order.event.order.OrderCancelled;
-import com.ecommerce.order.event.order.OrderCompleted;
-import com.ecommerce.order.event.order.OrderCreated;
-import com.ecommerce.order.event.stock.StockRejected;
-import com.ecommerce.order.event.stock.StockRequested;
-import com.ecommerce.order.event.stock.StockReserved;
-import com.ecommerce.order.event.transaction.TransactionApproved;
-import com.ecommerce.order.event.transaction.TransactionRejected;
-import com.ecommerce.order.event.transaction.TransactionRequested;
+import com.ecommerce.order.event.StockRejected;
+import com.ecommerce.order.event.StockRequested;
+import com.ecommerce.order.event.StockReserved;
+import com.ecommerce.order.event.OrderCancelled;
+import com.ecommerce.order.event.OrderCompleted;
+import com.ecommerce.order.event.OrderCreated;
+import com.ecommerce.order.event.TransactionApproved;
+import com.ecommerce.order.event.TransactionRejected;
+import com.ecommerce.order.event.TransactionRequested;
 
 import reactor.core.publisher.Mono;
 

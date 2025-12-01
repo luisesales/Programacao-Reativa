@@ -6,11 +6,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.ecommerce.order.event.DomainEvent;
+import com.ecommerce.order.event.StockRejected;
+import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.order.OrderCreated;
-import com.ecommerce.order.event.stock.StockRejected;
-import com.ecommerce.order.event.stock.StockReserved;
-import com.ecommerce.order.event.transaction.TransactionApproved;
-import com.ecommerce.order.event.transaction.TransactionRejected;
+import com.ecommerce.order.event.transaction.request.TransactionApproved;
+import com.ecommerce.order.event.transaction.request.TransactionRejected;
 import com.ecommerce.order.service.OrderOrchestrator;
 
 @Configuration

@@ -43,7 +43,7 @@ public class TransactionController {
     }
     
     @GetMapping(path = "/order/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<Transaction> getTransactionByOrderId(@PathVariable UUID id) {
+    public Mono<Transaction> getTransactionByOrderId(@PathVariable UUID id) {
         return transactionService.getTransactionByOrderId(id);
                                 
     }

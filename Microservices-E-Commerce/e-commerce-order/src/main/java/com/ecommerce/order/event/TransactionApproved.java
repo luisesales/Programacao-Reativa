@@ -1,4 +1,4 @@
-package com.ecommerce.transaction.event.transaction;
+package com.ecommerce.order.event;
 
 import java.util.UUID;
 

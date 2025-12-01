@@ -14,5 +14,5 @@ public interface TransactionRepository extends R2dbcRepository<Transaction, UUID
     Mono<Void> deleteById(UUID id);
     Mono<Transaction> findByName(String name);
     Mono<Transaction> save(Transaction transaction);
-    Flux<Transaction> findByOrderId(UUID orderId);
+    Mono<Transaction> findByOrderId(UUID orderId);
 }   

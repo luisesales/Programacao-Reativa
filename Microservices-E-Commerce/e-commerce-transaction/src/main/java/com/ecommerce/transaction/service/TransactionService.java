@@ -1,6 +1,9 @@
 package com.ecommerce.transaction.service;
 
+import java.time.LocalDateTime;
+
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,14 +12,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.ecommerce.transaction.event.transaction.TransactionApproved;
-import com.ecommerce.transaction.event.transaction.TransactionRejected;
-import com.ecommerce.transaction.event.transaction.TransactionRequested;
+import com.ecommerce.transaction.component.EventPublisher;
+import com.ecommerce.transaction.event.TransactionRequested;
+import com.ecommerce.transaction.event.TransactionRefundRequested;
+import com.ecommerce.transaction.event.transaction.refund.*;
 import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.model.dto.OrderInputDTO;
+import com.ecommerce.transaction.model.outbox.OutboxEvent;
+import com.ecommerce.transaction.model.outbox.OutboxEventContext;
 import com.ecommerce.transaction.repository.TransactionRepository;
-
-import com.ecommerce.transaction.component.EventPublisher;
+import com.ecommerce.transaction.repository.OutboxRepository;
+import com.ecommerce.transaction.repository.OutboxContextRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,22 +30,28 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class TransactionService {
-
+    private AtomicInteger currentBalance = new AtomicInteger(100000);
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     
     private final TransactionRepository transactionRepository;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
     private final EventPublisher eventPublisher;
+    private final OutboxRepository outboxRepository;
+    private final OutboxContextRepository outboxContextRepository;
 
     public TransactionService(TransactionRepository transactionRepository,                        
                         R2dbcEntityTemplate template,
-                        EventPublisher eventPublisher  
+                        EventPublisher eventPublisher, 
+                        OutboxRepository outboxRepository,
+                        OutboxContextRepository outboxContextRepository
                         ) 
         {
         this.transactionRepository = transactionRepository;
         r2dbcEntityTemplate = template; 
-        this.eventPublisher = eventPublisher;           
+        this.eventPublisher = eventPublisher;   
+        this.outboxRepository = outboxRepository;
+        this.outboxContextRepository = outboxContextRepository;        
     }
 
     public Flux<Transaction> getAllTransactions() {        
@@ -61,13 +73,13 @@ public class TransactionService {
             });
     }
 
-    public Flux<Transaction> getTransactionByOrderId(UUID orderId) {
+    public Mono<Transaction> getTransactionByOrderId(UUID orderId) {
         logger.info("Fetching transactions with order id: {}", orderId);
          return transactionRepository.findByOrderId(orderId)                  
-            .switchIfEmpty(Flux.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Transactions not found or access denied")))
+            .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Transactions not found or access denied")))
                               .doOnError(e -> {
                                 logger.error("Error fetching transaction id " + orderId, e);
-                                Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Retrieving Transaction with Order id "+ orderId + " message: " + e.getMessage(), e));
+                                Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Retrieving Transaction with Order id "+ orderId + " message: " + e.getMessage(), e));
             });
     }
 
@@ -110,38 +122,64 @@ public class TransactionService {
     } 
     
     public Mono<Void> handle(TransactionRequested event) {
+        return transactionRepository.findByOrderId(event.orderId())
+        .flatMap(existing -> {
+            logger.info("Event already processed for saga {}", event.sagaId());
+            return Mono.empty();
+        })
+        .switchIfEmpty(processNewTransaction(event));
+    }
+    public Mono<Void> processNewTransaction(TransactionRequested event) {
         logger.info("Processing transaction for order {} (saga: {})",
                 event.orderId(), event.sagaId());
 
         return transactionRepository.save(
                 new Transaction(
-                        event.name(),
-                        event.orderId(),
-                        event.totalPrice()
+                        event.name(),                        
+                        event.totalPrice(),
+                        event.orderId()
                 )
         ).flatMap(saved -> {
             logger.info("Transaction saved (id {}) for order {}", saved.getId(), saved.getOrderId());
 
             boolean approved = isPaymentApproved(event);
 
-            if (approved) {
-                eventPublisher.publish(
-                    new TransactionApproved(event.sagaId(), event.orderId(), saved.getId())
-                );
-                logger.info("Transaction APPROVED for order {}", event.orderId());
-            } else {
-                eventPublisher.publish(
-                    new TransactionRejected(event.sagaId(), event.orderId(), "Insufficient balance")
-                );
-                logger.info("Transaction REJECTED for order {}", event.orderId());
-            }
+            String eventType = approved ? "TransactionApproved" : "TransactionRejected";
 
-            return Mono.empty();
+            OutboxEvent outbox = new OutboxEvent(                
+                "TRANSACTION",
+                eventType,
+                false,
+                LocalDateTime.now()
+            );
+
+            return outboxRepository.save(outbox)
+                .thenMany(Flux.just(
+                    new OutboxEventContext(outbox.getId(), "sagaId", String.valueOf(event.sagaId()),saved.getId()),
+                    new OutboxEventContext(outbox.getId(), "orderId", String.valueOf(event.orderId()),saved.getId()),
+                    new OutboxEventContext(outbox.getId(), "transactionId", String.valueOf(saved.getId()),saved.getId())
+                ).flatMap(outboxContextRepository::save))
+                .then();
+            
         });
     }
 
+    public Mono<Void> handleRefund(TransactionRefundRequested event) {
+        logger.info("Processing refund for order {} (saga: {})",
+                event.orderId(), event.sagaId());
+
+        currentBalance.getAndAdd((int) Math.round(event.totalPrice()));
+        eventPublisher.publish(
+            new TransactionRefundApproved(event.sagaId(), event.orderId(), UUID.randomUUID())
+        );
+        logger.info("Refund processed for order {}: amount {}", event.orderId(), event.totalPrice());
+
+        return Mono.empty();
+    }
+    
+
     private boolean isPaymentApproved(TransactionRequested event) {        
-        return event.totalPrice() < 10000.0;
+        return currentBalance.getAndAdd((int) Math.round(-event.totalPrice())) >= 0;
     }
 } 
     
