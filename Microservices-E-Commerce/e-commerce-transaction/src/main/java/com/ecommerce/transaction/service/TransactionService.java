@@ -13,9 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.transaction.component.EventPublisher;
-import com.ecommerce.transaction.event.TransactionRequested;
-import com.ecommerce.transaction.event.TransactionRefundRequested;
-import com.ecommerce.transaction.event.transaction.refund.*;
+import com.ecommerce.transaction.event.*;
 import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.model.dto.OrderInputDTO;
 import com.ecommerce.transaction.model.outbox.OutboxEvent;
@@ -127,7 +125,8 @@ public class TransactionService {
             logger.info("Event already processed for saga {}", event.sagaId());
             return Mono.empty();
         })
-        .switchIfEmpty(processNewTransaction(event));
+        .switchIfEmpty(processNewTransaction(event))
+        .then();
     }
     public Mono<Void> processNewTransaction(TransactionRequested event) {
         logger.info("Processing transaction for order {} (saga: {})",
