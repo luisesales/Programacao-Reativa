@@ -14,6 +14,11 @@ import com.ecommerce.stock.event.DomainEvent;
 import com.ecommerce.stock.event.StockRequested;
 import com.ecommerce.stock.event.StockRejected;
 import com.ecommerce.stock.event.StockReserved;
+import com.ecommerce.stock.event.StockIncreaseRequested;
+import com.ecommerce.stock.event.StockIncreaseApproved;
+import com.ecommerce.stock.event.StockIncreaseRejected;
+
+
 
 
 @Table("outbox_event_context")
@@ -70,6 +75,13 @@ public class OutboxEventContext {
     public DomainEvent toDomainEvent(String eventType,Order tx) {
         return switch (eventType) {
 
+            case "StockRequested" -> new StockRequested(
+                getOutboxEventId(),
+                tx.getOrderId(),
+                tx.getName(),
+                tx.getTotalPrice(),                     
+            );
+
             case "StockApproved" -> new StockReserved(
                 getOutboxEventId(),                
                 tx.getId(),
@@ -81,20 +93,20 @@ public class OutboxEventContext {
                 getReason()        
             );
 
-            case "StockRefundRequested" -> new StockRefundRequested(
+            case "StockIncreaseRequested" -> new StockIncreaseRequested(
                 getOutboxEventId(),
                 tx.getOrderId(),
                 tx.getName(),
                 tx.getTotalPrice(),                     
             );
 
-            case "StockRefundApproved" -> new StockRefundApproved(
+            case "StockIncreaseApproved" -> new StockIncreaseApproved(
                 getOutboxEventId(),
                 tx.getOrderId(),
                 tx.getId()
             );
 
-            case "TransactionRefundRejected" -> new TransactionRefundRejected(
+            case "StockIncreaseRejected" -> new StockIncreaseRejected(
                 getOutboxEventId(),
                 tx.getOrderId(),                
                 getReason()

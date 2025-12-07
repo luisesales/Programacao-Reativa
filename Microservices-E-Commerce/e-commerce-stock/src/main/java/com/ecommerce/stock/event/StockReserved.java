@@ -5,4 +5,4 @@ import java.util.UUID;
 
 import com.ecommerce.stock.model.dto.ProductQuantityInputDTO;
 
-public record StockReserved(UUID sagaId, UUID orderId, List<ProductQuantityInputDTO> productsQuantity) implements StockEvent {}
+public record StockReserved(UUID sagaId, UUID orderId, UUID productId, Integer quantity) implements StockEvent {}

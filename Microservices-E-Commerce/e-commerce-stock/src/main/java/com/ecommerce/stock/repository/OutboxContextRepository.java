@@ -20,6 +20,13 @@ public interface OutboxContextRepository extends R2dbcRepository<OutboxEventCont
     WHERE outbox_event_id = :eventId
  """)
  Flux<OutboxEventContext> findByOutboxEventId(UUID eventId);
+
+ @Modifying
+   @Query("""
+      SELECT * FROM outbox_event_context
+      WHERE outbox_event_id = :eventId AND field_name = :fieldName
+   """)
+ Mono<OutboxEventContext> findByOutboxEventFieldName(UUID eventId,String fieldName);
  Flux<OutboxEventContext> findByOutboxEventIdIn(List<UUID> ids);
  Mono<Void> deleteByOutboxEventId(UUID eventId);
  Mono<Void> deleteByOutboxEventIdIn(List<UUID> eventIds);

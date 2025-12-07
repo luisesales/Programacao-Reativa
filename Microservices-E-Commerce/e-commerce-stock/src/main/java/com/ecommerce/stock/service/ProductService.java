@@ -1,10 +1,6 @@
 package com.ecommerce.stock.service;
 
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.redisson.api.RedissonReactiveClient;
 import org.slf4j.Logger;
@@ -19,17 +15,11 @@ import org.springframework.web.server.ResponseStatusException;
 import com.ecommerce.stock.config.ProductMapper;
 import com.ecommerce.stock.event.StockIncreaseRequested;
 import com.ecommerce.stock.event.StockRequested;
-import com.ecommerce.stock.model.Order;
-import com.ecommerce.stock.model.OrderResult;
 import com.ecommerce.stock.model.Product;
 import com.ecommerce.stock.model.dto.ProductInputDTO;
 import com.ecommerce.stock.model.dto.ProductQuantityInputDTO;
-import com.ecommerce.stock.model.outbox.OutboxEvent;
-import com.ecommerce.stock.model.outbox.OutboxEventContext;
 import com.ecommerce.stock.repository.ProductCacheRepository;
 import com.ecommerce.stock.repository.ProductRepository;
-import com.ecommerce.stock.repository.OutboxContextRepository;
-import com.ecommerce.stock.repository.OutboxRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,23 +34,20 @@ public class ProductService {
     private final RedissonReactiveClient redissonClient;
     private final R2dbcEntityTemplate r2dbcEntityTemplate;
     private final ProductCacheRepository cache;
-    private final OutboxRepository outboxRepository;
-    private final OutboxContextRepository outboxContextRepository;
+    private final OutboxService outboxService;
 
     public ProductService(ProductRepository repo, 
                           RedissonReactiveClient redissonClient, 
                           ProductCacheRepository cache,
                           R2dbcEntityTemplate template,
                           ProductMapper productMapper,
-                          OutboxRepository outboxRepository,
-                          OutboxContextRepository outboxContextRepository) {
+                          OutboxService outboxService) {
         this.productRepository = repo;
         this.redissonClient = redissonClient;
         this.cache = cache;
         this.r2dbcEntityTemplate = template;
-        this.productMapper = productMapper;
-        this.outboxRepository = outboxRepository;
-        this.outboxContextRepository = outboxContextRepository;
+        this.productMapper = productMapper;        
+        this.outboxService = outboxService;
     }
 
     
@@ -230,7 +217,7 @@ public class ProductService {
     }
 
     public Mono<Void> handle(StockRequested event) {
-        return OutboxContextRepository.findByOrderId(event.orderId())
+        return outboxService.findByOrderId(event.orderId())
             .flatMap(existing -> {
                 logger.info("Event already processed for saga {}", event.sagaId());
                 return Mono.empty();
@@ -242,7 +229,7 @@ public class ProductService {
     }
 
     public Mono<Void> handleIncrease(StockIncreaseRequested event) {
-        return OutboxContextRepository.findByOrderId(event.orderId())
+        return outboxService.findByOrderId(event.orderId())
             .flatMap(existing -> {
                 logger.info("Stock increase event already processed for saga {}", event.sagaId());
                 return Mono.empty();
@@ -257,7 +244,7 @@ public class ProductService {
         logger.info("Processing stock increase for product {} (saga: {})",
             event.orderId(), event.sagaId());
         return Flux.fromIterable(event.productsQuantity())
-        .flatMap(entry -> increaseStock(entry.productId(), entry.quantity()))
+        .flatMap(entry -> increaseStock(entry.productId(), entry.quantity(), event.sagaId(), event.orderId()))
         .then();
     }
 
@@ -281,118 +268,132 @@ public class ProductService {
         }
     private Mono<Void> processSingleProduct(StockRequested event, ProductQuantityInputDTO entry) {
 
-        OutboxEvent outbox = new OutboxEvent(
-                "STOCK",
-                "StockRequested",
-                false,
-                LocalDateTime.now()
-        );
-
-        return productRepository.tryDecreaseStock(entry.productId(), entry.quantity())
-            .flatMap(updated ->
-                cache.save(updated)
-                    .then(outboxRepository.save(outbox))
-                    .then(saveContexts(
-                            outbox.getId(),
+        return outboxService.saveOutbox(        
+            event.sagaId(),
+            event.orderId(),
+            entry.productId(),
+            entry.quantity(),
+            null,
+            "StockRequested"
+        ).map(saved -> saved.getId())
+        .flatMap(id -> {
+            return productRepository.tryDecreaseStock(entry.productId(), entry.quantity())
+                .flatMap(updated ->
+                    cache.save(updated)                    
+                        .then(outboxService.updateOutbox(
+                                id,
+                                event.sagaId(),
+                                event.orderId(),
+                                updated.getId(),
+                                entry.quantity(),
+                                null,
+                                "StockReserved"
+                        ))
+                        .doOnSuccess(v -> logger.info(
+                                "Stock decreased for product {} by quantity {}",
+                                entry.productId(), entry.quantity()
+                                )
+                        )
+                )
+                .switchIfEmpty(
+                    productRepository.findById(entry.productId())
+                    .flatMap(existing ->
+                        outboxService.updateOutbox(
+                            id,
                             event.sagaId(),
                             event.orderId(),
-                            updated.getId(),
-                            null
-                    ))
-                    .doOnSuccess(v -> logger.info(
-                            "Stock decreased for product {} by quantity {}",
-                            entry.productId(), entry.quantity()
-                    ))
-            )
-
-            .switchIfEmpty(
-                productRepository.findById(entry.productId())
-                    .flatMap(existing ->
-                        outboxRepository.save(outbox)
-                            .then(saveContexts(
-                                    outbox.getId(),
-                                    event.sagaId(),
-                                    event.orderId(),
-                                    existing.getId(),
-                                    "Insufficient stock for product: " + existing.getName()
-                            ))
-                            .doOnSuccess(v -> logger.warn(
-                                    "Insufficient stock for product {}", existing.getName()))
-                    )
+                            existing.getId(),
+                            entry.quantity(),                                
+                            "Insufficient stock for product: " + existing.getName(),
+                            "StockRejected"
+                        )
+                        .doOnSuccess(v -> logger.warn(
+                                "Insufficient stock for product {}", existing.getName()))
+                    )                           
                     .switchIfEmpty(
                         Mono.defer(() -> {
                             logger.warn("Product not found with id {}", entry.productId());
 
-                            return outboxRepository.save(outbox)
-                                .then(saveContexts(
-                                        outbox.getId(),
-                                        event.sagaId(),
-                                        event.orderId(),
-                                        entry.productId(),   
-                                        "Product not found with id: " + entry.productId()
-                                ));
+                            return outboxService.updateOutbox(
+                                id,
+                                event.sagaId(),
+                                event.orderId(),
+                                entry.productId(),
+                                entry.quantity(),                                    
+                                "Product not found with id: " + entry.productId(),
+                                "StockRejected"
+                            );
                         })
-                    )
-            )
+                    ))            
+                .onErrorResume(e -> {
+                    logger.error("Error processing product {}: {}", entry.productId(), e.getMessage());
 
-            .onErrorResume(e -> {
-                logger.error("Error processing product {}: {}", entry.productId(), e.getMessage());
+                    return outboxService.updateOutbox(
+                                id,                                
+                                event.sagaId(),
+                                event.orderId(),
+                                entry.productId(),
+                                entry.quantity(),                                
+                                "Error: " + e.getMessage(),
+                                "StockRejected"
+                            
+                        );
+                });
+            }).then();            
+    }    
 
-                return outboxRepository.save(outbox)
-                    .then(saveContexts(
-                            outbox.getId(),
-                            event.sagaId(),
-                            event.orderId(),
-                            entry.productId(),
-                            "Error: " + e.getMessage()
-                    ));
-            })
-
-            .then();
-    }
-
-    private Mono<Void> saveContexts(
-        UUID outboxId,
-        UUID sagaId,
-        UUID orderId,
-        UUID productId,
-        String errorMessage
-    ) {
-
-        List<OutboxEventContext> ctx = new ArrayList<>();
-
-        ctx.add(new OutboxEventContext(outboxId, "sagaId", sagaId.toString(), orderId));
-        ctx.add(new OutboxEventContext(outboxId, "orderId", orderId.toString(), orderId));
-        ctx.add(new OutboxEventContext(outboxId, "productId", productId.toString(), orderId));
-
-        if (errorMessage != null) {
-            ctx.add(new OutboxEventContext(outboxId, "error", errorMessage, orderId));
-        }
-
-        return Flux.fromIterable(ctx)
-                .flatMap(outboxContextRepository::save)
-                .then();
-    }
+    
 
 
-    public Mono<Boolean> increaseStock(UUID id, int quantity) {
+
+    public Mono<Boolean> increaseStock(UUID id, int quantity, UUID sagaId, UUID orderId) {
         logger.info("Increasing stock for product with id: {} by quantity: {}", id, quantity);
+        
         return productRepository.findById(id)                
                 .flatMap(product -> {
                     product.increaseStock(quantity);
                     productRepository.save(product);
+                    
+                    outboxService.saveOutbox(                            
+                            sagaId,
+                            orderId,
+                            product.getId(),
+                            quantity,
+                            null,
+                            "StockIncreaseApproved"
+                    );
+
                     logger.info("Stock for product with id {} increased successfully.", id);
                     return Mono.just(true);
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     logger.warn("Product with id {} not found for stock increase.", id);
+                    outboxService.saveOutbox(                            
+                            sagaId,
+                            orderId,
+                            id,
+                            null,
+                            "Product not found with id: " + id,
+                            "StockIncreaseRejected"
+                    );
                     return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with "+ id + " not found"));
                 }))
                 .onErrorResume(e -> {
                     logger.error("Error increasing stock: {}", e.getMessage(), e);
+                    outboxService.saveOutbox(                            
+                            sagaId,
+                            orderId,
+                            id,
+                            quantity,
+                            "Error: " + e.getMessage(),
+                            "StockIncreaseRejected"
+                    );
                     return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Increasing Stock with message: " + e.getMessage(), e));
                 });
     }
+
+        
+
 
     @Scheduled(fixedRate = 15*60*1000)
     @CacheEvict(value="products", allEntries = true)
