@@ -360,7 +360,7 @@ public class ProductService {
                             product.getId(),
                             quantity,
                             null,
-                            "StockIncreaseApproved"
+                            "StockIncreaseReserved"
                     );
 
                     logger.info("Stock for product with id {} increased successfully.", id);

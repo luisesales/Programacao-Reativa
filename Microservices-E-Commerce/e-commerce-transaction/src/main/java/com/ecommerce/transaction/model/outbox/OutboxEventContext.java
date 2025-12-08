@@ -66,43 +66,7 @@ public class OutboxEventContext {
         this.fieldValue = fieldValue;
     }
 
-    public DomainEvent toDomainEvent(String eventType,Transaction tx) {
-        return switch (eventType) {
-
-            case "TransactionApproved" -> new TransactionApproved(
-                getOutboxEventId(),
-                tx.getOrderId(),
-                tx.getId()
-            );
-
-            case "TransactionRejected" -> new TransactionRejected(
-                getOutboxEventId(),
-                tx.getId(),
-                getReason()        
-            );
-
-            case "TransactionRefundRequested" -> new TransactionRefundRequested(
-                getOutboxEventId(),
-                tx.getOrderId(),
-                tx.getName(),
-                tx.getTotalPrice(),                     
-            );
-
-            case "TransactionRefundApproved" -> new TransactionRefundApproved(
-                getOutboxEventId(),
-                tx.getOrderId(),
-                tx.getId()
-            );
-
-            case "TransactionRefundRejected" -> new TransactionRefundRejected(
-                getOutboxEventId(),
-                tx.getOrderId(),                
-                getReason()
-            );
-            default -> throw new IllegalArgumentException("Unknown event type: " + eventType);
-        };
-    }
-    private String getReason() {
+    public String getReason() {
         if ("reason".equals(this.fieldName)) {
             return this.fieldValue;
         }

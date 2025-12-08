@@ -18,9 +18,6 @@ import com.ecommerce.stock.event.StockIncreaseRequested;
 import com.ecommerce.stock.event.StockIncreaseApproved;
 import com.ecommerce.stock.event.StockIncreaseRejected;
 
-
-
-
 @Table("outbox_event_context")
 public class OutboxEventContext {
     @Id
@@ -72,49 +69,8 @@ public class OutboxEventContext {
         this.fieldValue = fieldValue;
     }
 
-    public DomainEvent toDomainEvent(String eventType,Order tx) {
-        return switch (eventType) {
-
-            case "StockRequested" -> new StockRequested(
-                getOutboxEventId(),
-                tx.getOrderId(),
-                tx.getName(),
-                tx.getTotalPrice(),                     
-            );
-
-            case "StockApproved" -> new StockReserved(
-                getOutboxEventId(),                
-                tx.getId(),
-            );
-
-            case "StockRejected" -> new StockRejected(
-                getOutboxEventId(),
-                tx.getId(),
-                getReason()        
-            );
-
-            case "StockIncreaseRequested" -> new StockIncreaseRequested(
-                getOutboxEventId(),
-                tx.getOrderId(),
-                tx.getName(),
-                tx.getTotalPrice(),                     
-            );
-
-            case "StockIncreaseApproved" -> new StockIncreaseApproved(
-                getOutboxEventId(),
-                tx.getOrderId(),
-                tx.getId()
-            );
-
-            case "StockIncreaseRejected" -> new StockIncreaseRejected(
-                getOutboxEventId(),
-                tx.getOrderId(),                
-                getReason()
-            );
-            default -> throw new IllegalArgumentException("Unknown event type: " + eventType);
-        };
-    }
-    private String getReason() {
+    
+    public String getReason() {
         if ("reason".equals(this.fieldName)) {
             return this.fieldValue;
         }
