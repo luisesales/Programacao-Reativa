@@ -19,7 +19,10 @@ import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 import com.ecommerce.order.model.saga.SagaContext;
 import com.ecommerce.order.model.saga.SagaInstance;
 import com.ecommerce.order.model.saga.SagaState;
+import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 import com.ecommerce.order.repository.SagaRepository;
+import com.ecommerce.order.repository.SagaContextRepository;
+
 
 import reactor.core.publisher.Mono;
 
@@ -27,11 +30,16 @@ import reactor.core.publisher.Mono;
 public class SagaService {
 
     private final SagaRepository sagaRepository;
+    private final SagaContextRepository sagaContextRepository;
+    private final SagaContextProductsQuantity sagaContextProductsQuantity;
     private final EventPublisher eventPublisher;
 
-    public SagaService(SagaRepository sagaRepository, EventPublisher eventPublisher) {
+    public SagaService(SagaRepository sagaRepository, EventPublisher eventPublisher, SagaContextRepository sagaContextRepository,
+            SagaContextProductsQuantity sagaContextProductsQuantity) {
         this.sagaRepository = sagaRepository;
         this.eventPublisher = eventPublisher;
+        this.sagaContextRepository = sagaContextRepository;
+        this.sagaContextProductsQuantity = sagaContextProductsQuantity;
     }
 
     public Mono<SagaInstance> startSagaForOrderReactive(Order order) {

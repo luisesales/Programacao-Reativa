@@ -1,31 +1,38 @@
 package com.ecommerce.order.model.saga;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 
 @Table("saga_context")
 public class SagaContext {
 
     @Id
+    @Column("id")
     private UUID id;
+
+    @Column("name")
     private String name;
+
+    @Column("total_price")
     private double totalPrice;
+
+    @Column("transaction_id")
     private UUID transactionId;
+
+    @Column("stock_reservation_id")
     private UUID stockReservationId;
-    private List<ProductQuantityInputDTO> productsQuantity;
+
+    @Column("saga_id")
     private UUID sagaId;
 
-    public SagaContext(String name, double totalPrice, UUID transactionId, UUID stockReservationId, List<ProductQuantityInputDTO> productsQuantity, UUID sagaId){
+    public SagaContext(String name, double totalPrice, UUID transactionId, UUID stockReservationId, UUID sagaId){
         this.name = name;
         this.totalPrice = totalPrice;
         this.transactionId = transactionId;
-        this.stockReservationId = stockReservationId;
-        this.productsQuantity = productsQuantity;
+        this.stockReservationId = stockReservationId;        
         this.sagaId = sagaId;
     }
 
@@ -36,7 +43,6 @@ public class SagaContext {
     public void setName(String name){
         this.name = name;
     }
-
     public void setTotalPrice(double totalPrice) {
         this.totalPrice = totalPrice;
     }
@@ -45,10 +51,7 @@ public class SagaContext {
     }
     public void setStockReservationId(UUID stockReservationId){
         this.stockReservationId = stockReservationId;
-    }
-    public void setProductsQuantity(List<ProductQuantityInputDTO> productsQuantity){
-        this.productsQuantity = productsQuantity;
-    }
+    }    
     public void setSagaId(UUID sagaId){
         this.sagaId = sagaId;
     }
@@ -57,7 +60,6 @@ public class SagaContext {
     public String getName(){ return name; }
     public double getTotalPrice() { return totalPrice; }
     public UUID getTransactionId() { return transactionId; }
-    public UUID getStockReservationId() { return stockReservationId; }
-    public List<ProductQuantityInputDTO> getProductsQuantity() { return productsQuantity; }
+    public UUID getStockReservationId() { return stockReservationId; }    
     public UUID getSagaId() { return sagaId; }
 }
