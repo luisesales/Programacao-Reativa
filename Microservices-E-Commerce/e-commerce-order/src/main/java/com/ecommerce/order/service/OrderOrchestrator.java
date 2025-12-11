@@ -1,22 +1,19 @@
 package com.ecommerce.order.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.order.component.EventPublisher;
 import com.ecommerce.order.event.DomainEvent;
-import com.ecommerce.order.event.StockRejected;
-import com.ecommerce.order.event.StockRequested;
-import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.OrderCancelled;
 import com.ecommerce.order.event.OrderCompleted;
 import com.ecommerce.order.event.OrderCreated;
+import com.ecommerce.order.event.StockRejected;
+import com.ecommerce.order.event.StockRequested;
+import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.TransactionApproved;
+import com.ecommerce.order.event.TransactionRefundRequested;
 import com.ecommerce.order.event.TransactionRejected;
 import com.ecommerce.order.event.TransactionRequested;
-import com.ecommerce.order.model.Product;
-import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 
 import reactor.core.publisher.Mono;
 
@@ -43,19 +40,24 @@ public class OrderOrchestrator {
             ));
 
         // === ETAPA 2 — inicia reserva de estoque ===
-        case TransactionApproved evt -> sagaService
-            .onTransactionApproved(evt)          
-            .flatMap(products ->
-                Mono.fromRunnable(() ->
-                    eventPublisher.publish(new StockRequested(
-                        evt.sagaId(), evt.orderId(), products
-                    ))
+        case TransactionApproved evt -> sagaService.onTransactionApproved(evt)
+            .then(sagaService.getProductsQuantityById(evt.sagaId()))
+            .doOnNext(products ->
+                eventPublisher.publish(
+                    new StockRequested(
+                        evt.sagaId(),
+                        evt.orderId(),
+                        products
+                    )
                 )
-            );
+            )
+            .then();
+
+
 
         // ETAPA 3 — pedido concluído 
         case StockReserved evt -> sagaService.onStockReserved(evt)
-            .then(Mono.fromRunnable(() ->
+            .then(Mono.fromRunnable(() -> 
                 eventPublisher.publish(new OrderCompleted(evt.sagaId(), evt.orderId()))
             ));
 
@@ -67,9 +69,16 @@ public class OrderOrchestrator {
 
         // COMPENSAÇÃO — devolução de estoque
         case StockRejected evt -> sagaService.onStockRejected(evt)
-            .then(Mono.fromRunnable(() ->
-                eventPublisher.publish(new OrderCancelled(evt.sagaId(), evt.orderId(), evt.reason()))
-            ));
+            .then(sagaService.findContextBySagaId(evt.sagaId()))
+            .doOnNext(context -> 
+                eventPublisher.publish(
+                    new TransactionRefundRequested(
+                        evt.sagaId(),context.getOrderId(),context.getName(),context.getTotalPrice()
+                    )
+                )
+            )
+            .then();
+        
 
         default -> Mono.error(new IllegalArgumentException("Event not supported by Orchestrator"));
     };

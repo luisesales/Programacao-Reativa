@@ -15,7 +15,7 @@ CREATE TABLE order_items (
 
 CREATE TABLE IF NOT EXISTS saga_instance (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    order_id UUID NOT NULL,
+    
     state VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -24,8 +24,9 @@ CREATE TABLE IF NOT EXISTS saga_instance (
 
 CREATE TABLE IF NOT EXISTS saga_context (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    order_id UUID NOT NULL,
     total_price DOUBLE PRECISION NOT NULL,
-    transaction_id UUID,
+    transaction_id UUID,    
     stock_reservation_id UUID,
     saga_id UUID NOT NULL UNIQUE,
     CONSTRAINT fk_saga_context_saga

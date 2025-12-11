@@ -4,12 +4,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 
 @Table("saga_instance")
 public class SagaInstance {
@@ -17,15 +15,10 @@ public class SagaInstance {
     @Column("id")
     private UUID sagaId;
 
-    @NotBlank(message="Order ID is necessary")
-    @Column("order_id")
-    private UUID orderId;
-
     @Column("state")
     private SagaState state;
 
-    @NotEmpty(message="context is necessary")
-    @Column("context")
+    @Transient
     private SagaContext context;
 
     @Column("created_at")
@@ -49,13 +42,6 @@ public class SagaInstance {
     }
     public void setSagaId(UUID sagaId) { 
         this.sagaId = sagaId; 
-    }
-
-    public UUID getOrderId() { 
-        return orderId; 
-    }
-    public void setOrderId(UUID orderId) { 
-        this.orderId = orderId; 
     }
 
     public void setState(SagaState state) {

@@ -29,7 +29,7 @@ public class OutboxService {
     public Mono<OutboxEvent> saveOutbox(        
         UUID sagaId,
         UUID orderId,
-        UUID transactionId
+        UUID transactionId,
         String errorMessage,
         String eventType
 

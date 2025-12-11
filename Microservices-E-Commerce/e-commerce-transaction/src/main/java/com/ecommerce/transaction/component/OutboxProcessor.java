@@ -9,8 +9,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.ecommerce.transaction.event.DomainEvent;
+import com.ecommerce.transaction.event.TransactionRequested;
 import com.ecommerce.transaction.event.TransactionApproved;
 import com.ecommerce.transaction.event.TransactionRejected;
+import com.ecommerce.transaction.event.TransactionRefundRequested;
+import com.ecommerce.transaction.event.TransactionRefundApproved;
+import com.ecommerce.transaction.event.TransactionRefundRejected;
 import com.ecommerce.transaction.model.Transaction;
 import com.ecommerce.transaction.model.outbox.OutboxEvent;
 import com.ecommerce.transaction.model.outbox.OutboxEventContext;
@@ -82,6 +86,13 @@ private void start() {
 
     public DomainEvent toDomainEvent(String eventType, Transaction tx, UUID sagaId, String error) {
         return switch (eventType) {
+
+            case "TransactionRequested" -> new TransactionRequested(
+                sagaId,
+                tx.getOrderId(),
+                tx.getName(),
+                tx.getTotalPrice()
+            );
 
             case "TransactionApproved" -> new TransactionApproved(
                 sagaId,

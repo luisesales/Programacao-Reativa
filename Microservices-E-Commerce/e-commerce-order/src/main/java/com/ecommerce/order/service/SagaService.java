@@ -1,29 +1,31 @@
 package com.ecommerce.order.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.order.component.EventPublisher;
-import com.ecommerce.order.event.StockRejected;
-import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.OrderCancelled;
 import com.ecommerce.order.event.OrderCompleted;
 import com.ecommerce.order.event.OrderCreated;
+import com.ecommerce.order.event.StockRejected;
+import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.TransactionApproved;
 import com.ecommerce.order.event.TransactionRejected;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 import com.ecommerce.order.model.saga.SagaContext;
+import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 import com.ecommerce.order.model.saga.SagaInstance;
 import com.ecommerce.order.model.saga.SagaState;
-import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
-import com.ecommerce.order.repository.SagaRepository;
+import com.ecommerce.order.repository.SagaContextProductsQuantityRepository;
 import com.ecommerce.order.repository.SagaContextRepository;
+import com.ecommerce.order.repository.SagaRepository;
 
-
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -31,15 +33,15 @@ public class SagaService {
 
     private final SagaRepository sagaRepository;
     private final SagaContextRepository sagaContextRepository;
-    private final SagaContextProductsQuantity sagaContextProductsQuantity;
+    private final SagaContextProductsQuantityRepository sagaContextProductsQuantityRepository;
     private final EventPublisher eventPublisher;
 
     public SagaService(SagaRepository sagaRepository, EventPublisher eventPublisher, SagaContextRepository sagaContextRepository,
-            SagaContextProductsQuantity sagaContextProductsQuantity) {
+            SagaContextProductsQuantityRepository sagaContextProductsQuantityRepository) {
         this.sagaRepository = sagaRepository;
         this.eventPublisher = eventPublisher;
         this.sagaContextRepository = sagaContextRepository;
-        this.sagaContextProductsQuantity = sagaContextProductsQuantity;
+        this.sagaContextProductsQuantityRepository = sagaContextProductsQuantityRepository;
     }
 
     public Mono<SagaInstance> startSagaForOrderReactive(Order order) {
@@ -51,32 +53,38 @@ public class SagaService {
 
     private Mono<SagaInstance> createAndPublishSaga(Order order) {
 
-        SagaInstance saga = new SagaInstance();
-        saga.setOrderId(order.getId());
+        SagaInstance saga = new SagaInstance();        
         saga.setState(SagaState.ORDER_CREATED);
 
         SagaContext context = new SagaContext(saga.getSagaId());
-        context.setTotalPrice(order.getTotalPrice());
-        context.setProductsQuantity(
-            order.getProductsQuantity().entrySet().stream()
-                .map(e -> new ProductQuantityInputDTO(e.getKey(), e.getValue()))
-                .toList()
-        );
+        context.setOrderId(order.getId());
+        context.setTotalPrice(order.getTotalPrice());        
         saga.setContext(context);
+        
+        Flux.fromIterable(order.getProductsQuantity().entrySet())
+        .map(e -> new SagaContextProductsQuantity(
+                context.getId(),
+                e.getKey(),
+                e.getValue()
+        ))
+        .flatMap(sagaContextProductsQuantityRepository::save)
+        .map(saved -> saved.toProductQuantityInputDTO())
+        .collectList()           
+        .doOnNext(list -> {
+            
+            context.setProductsQuantity(list);
+        });
 
         return sagaRepository.save(saga)
             .flatMap(saved -> {
                 OrderCreated event = new OrderCreated(
                         saved.getSagaId(),
-                        saved.getOrderId(),
+                        context.getOrderId(),
                         saved.getContext().getName(),
                         context.getTotalPrice(),
                         context.getProductsQuantity()
-                );
-
-                
+                );                
                 eventPublisher.publish(event);
-
                 return Mono.just(saved);
             });
     }
@@ -158,6 +166,20 @@ public class SagaService {
     public Mono<SagaInstance> findByOrderId(UUID orderId) {
         return sagaRepository.findByOrderId(orderId);
     }
+
+    public Mono<List<ProductQuantityInputDTO>> getProductsQuantityById(UUID sagaId){
+        return sagaContextRepository.findBySagaId(sagaId)
+        .flatMap(context ->
+            sagaContextProductsQuantityRepository.findBySagaContextId(context.getId())
+                .map(SagaContextProductsQuantity::toProductQuantityInputDTO)
+                .collectList()
+        );
+    }
+
+    public Mono<SagaContext> findContextBySagaId(UUID sagaId){
+        return sagaContextRepository.findBySagaId(sagaId);
+    } 
+    
     // public Mono<SagaInstance> save(SagaInstance saga) {
     //     return sagaRepository.save(saga);
     // }

@@ -1,15 +1,17 @@
 package com.ecommerce.order.repository;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 
-import com.ecommerce.order.model.saga.SagaContext;
+import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-public interface SagaContextProductsQuantityRepository extends R2dbcRepository<SagaContext, UUID> {
-    Mono<SagaContext> findBySagaContextId(UUID sagaContextId);
-    Flux<SagaContext> findByProductId(UUID productId);
+public interface SagaContextProductsQuantityRepository extends R2dbcRepository<SagaContextProductsQuantity, UUID> {
+    Flux<SagaContextProductsQuantity> findBySagaContextId(UUID sagaContextId);
+    Flux<SagaContextProductsQuantity> findByProductId(UUID productId);
+    Mono<Void> saveAll(List<SagaContextProductsQuantity> list);
 }
