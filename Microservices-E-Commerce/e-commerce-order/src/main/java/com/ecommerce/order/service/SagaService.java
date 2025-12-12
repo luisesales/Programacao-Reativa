@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.order.component.EventPublisher;
+import com.ecommerce.order.event.DomainEvent;
 import com.ecommerce.order.event.OrderCancelled;
 import com.ecommerce.order.event.OrderCompleted;
 import com.ecommerce.order.event.OrderCreated;
@@ -93,7 +94,7 @@ public class SagaService {
 
     @Transactional
 public Mono<SagaInstance> transitionState(
-        UUID sagaId,
+        DomainEvent event,
         SagaState newState,
         SagaMutator mutator
 ) {
@@ -108,7 +109,7 @@ public Mono<SagaInstance> transitionState(
                     if (instance.getState() == newState) {
                         return Mono.just(instance);
                     }
-                    
+                    sagaContextProductsQuantityRepository.findBySagaContextIdProdId(context.getId())
                     if (mutator != null) {
                         mutator.apply(instance, context);
                     }
@@ -202,7 +203,8 @@ public Mono<SagaInstance> transitionState(
     @Transactional
     public void saveAll(
         List<SagaInstance> instances,
-        List<SagaContext> contexts
+        List<SagaContext> contexts,
+        List<SagaContextProductsQuantity> productsQuantity
     ) {
         sagaRepository.saveAll(instances);
         sagaContextRepository.saveAll(contexts);
