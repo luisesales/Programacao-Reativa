@@ -78,7 +78,7 @@ public class OrderOrchestrator {
                 )
             )
             .then();
-        
+         
 
         default -> Mono.error(new IllegalArgumentException("Event not supported by Orchestrator"));
     };

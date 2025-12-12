@@ -31,6 +31,7 @@ public class OutboxService {
         UUID orderId,
         UUID productId,
         Integer quantity,
+        Double totalPrice,
         String errorMessage,
         String eventType
 
@@ -44,7 +45,7 @@ public class OutboxService {
         return outboxRepository.save(outbox)
               .thenMany(
                 Flux.fromIterable(buildUpdatedContext(
-                    outbox.getId(), sagaId, orderId, productId, quantity, errorMessage
+                    outbox.getId(), sagaId, orderId, productId, quantity,totalPrice, errorMessage
                 )).flatMap(outboxContextRepository::save)
             ).then(Mono.just(outbox));     
     }
@@ -55,6 +56,7 @@ public class OutboxService {
         UUID orderId,
         UUID productId,
         Integer quantity,
+        Double totalPrice,
         String errorMessage,
         String newEventType
     ) {
@@ -74,7 +76,7 @@ public class OutboxService {
             )
             .thenMany(
                 Flux.fromIterable(buildUpdatedContext(
-                    outboxId, sagaId, orderId, productId, quantity, errorMessage
+                    outboxId, sagaId, orderId, productId, quantity, totalPrice , errorMessage
                 )).flatMap(outboxContextRepository::save)
             )
             .then();
@@ -87,6 +89,7 @@ public class OutboxService {
             UUID orderId,
             UUID productId,
             Integer quantity,
+            Double totalPrice,
             String errorMessage
     ) {
         List<OutboxEventContext> ctx = new ArrayList<>();
@@ -95,6 +98,9 @@ public class OutboxService {
         ctx.add(new OutboxEventContext(outboxId, "productId", productId.toString(), orderId));
         if (quantity != null) {
             ctx.add(new OutboxEventContext(outboxId, "quantity", quantity.toString(), orderId));
+        }
+        if (totalPrice >= 0.0){
+            ctx.add(new OutboxEventContext(outboxId, "totalPrice", totalPrice.toString(), orderId));
         }
         if (errorMessage != null) {
             ctx.add(new OutboxEventContext(outboxId, "error", errorMessage, orderId));

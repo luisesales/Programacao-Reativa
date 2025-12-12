@@ -273,6 +273,7 @@ public class ProductService {
             event.orderId(),
             entry.productId(),
             entry.quantity(),
+            -1.0,
             null,
             "StockRequested"
         ).map(saved -> saved.getId())
@@ -286,6 +287,7 @@ public class ProductService {
                                 event.orderId(),
                                 updated.getId(),
                                 entry.quantity(),
+                                updated.getPrice() * entry.quantity(),
                                 null,
                                 "StockReserved"
                         ))
@@ -303,7 +305,8 @@ public class ProductService {
                             event.sagaId(),
                             event.orderId(),
                             existing.getId(),
-                            entry.quantity(),                                
+                            entry.quantity(),
+                            existing.getPrice() * entry.quantity(),                                
                             "Insufficient stock for product: " + existing.getName(),
                             "StockRejected"
                         )
@@ -319,7 +322,8 @@ public class ProductService {
                                 event.sagaId(),
                                 event.orderId(),
                                 entry.productId(),
-                                entry.quantity(),                                    
+                                entry.quantity(),
+                                0.0,                                    
                                 "Product not found with id: " + entry.productId(),
                                 "StockRejected"
                             );
@@ -333,7 +337,8 @@ public class ProductService {
                                 event.sagaId(),
                                 event.orderId(),
                                 entry.productId(),
-                                entry.quantity(),                                
+                                entry.quantity(),
+                                0.0,                                
                                 "Error: " + e.getMessage(),
                                 "StockRejected"
                             
@@ -359,6 +364,7 @@ public class ProductService {
                             orderId,
                             product.getId(),
                             quantity,
+                            product.getPrice() * quantity,
                             null,
                             "StockIncreaseReserved"
                     );
@@ -373,6 +379,7 @@ public class ProductService {
                             orderId,
                             id,
                             null,
+                            0.0,
                             "Product not found with id: " + id,
                             "StockIncreaseRejected"
                     );
@@ -385,6 +392,7 @@ public class ProductService {
                             orderId,
                             id,
                             quantity,
+                            0.0,
                             "Error: " + e.getMessage(),
                             "StockIncreaseRejected"
                     );

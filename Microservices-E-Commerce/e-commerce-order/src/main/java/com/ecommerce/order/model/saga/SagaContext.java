@@ -32,21 +32,17 @@ public class SagaContext {
     @Column("transaction_id")
     private UUID transactionId;
 
-    @Column("stock_reservation_id")
-    private UUID stockReservationId;
-
     @Column("saga_id")
     private UUID sagaId;
 
     @Transient
     private List<ProductQuantityInputDTO> productsQuantity;
 
-    public SagaContext(UUID orderId,String name, double totalPrice, UUID transactionId, UUID stockReservationId, UUID sagaId){
+    public SagaContext(UUID orderId,String name, double totalPrice, UUID transactionId, UUID sagaId){
         this.orderId = orderId;
         this.name = name;
         this.totalPrice = totalPrice;
-        this.transactionId = transactionId;
-        this.stockReservationId = stockReservationId;        
+        this.transactionId = transactionId;             
         this.sagaId = sagaId;
     }
 
@@ -63,9 +59,6 @@ public class SagaContext {
     public void setTransactionId(UUID transactionId){
         this.transactionId = transactionId;
     }
-    public void setStockReservationId(UUID stockReservationId){
-        this.stockReservationId = stockReservationId;
-    }    
     public void setSagaId(UUID sagaId){
         this.sagaId = sagaId;
     }
@@ -80,8 +73,7 @@ public class SagaContext {
     public UUID getOrderId() { return orderId;}
     public String getName(){ return name; }
     public double getTotalPrice() { return totalPrice; }
-    public UUID getTransactionId() { return transactionId; }
-    public UUID getStockReservationId() { return stockReservationId; }    
+    public UUID getTransactionId() { return transactionId; }   
     public UUID getSagaId() { return sagaId; }
     public List<ProductQuantityInputDTO> getProductsQuantity() { return productsQuantity; }
 }

@@ -67,11 +67,12 @@ public class OutboxProcessor {
         UUID orderId   = getUUID(contexts, "orderId");
         UUID sagaId    = getUUID(contexts, "sagaId");
         Integer qty    = getInt(contexts, "quantity");
+        Double totalPrice = getDouble(contexts, "totalPrice");
         String error   = getString(contexts, "error");
 
         return productRepository.findById(productId)
             .map(product ->
-                toDomainEvent(outboxEvent.getEventType(), sagaId, orderId, productId, qty, error)
+                toDomainEvent(outboxEvent.getEventType(), sagaId, orderId, productId, qty,totalPrice, error)
             )
             .flatMap(eventPublisher::publish)         
             .then(outboxRepository.markAsSent(outboxEvent.getId()))            
@@ -80,7 +81,7 @@ public class OutboxProcessor {
     }
 
 
-    private DomainEvent toDomainEvent(String eventType, UUID sagaId, UUID orderId, UUID productId, Integer quantity, String error) {        
+    private DomainEvent toDomainEvent(String eventType, UUID sagaId, UUID orderId, UUID productId, Integer quantity, Double totalPrice, String error) {        
        return switch (eventType) {
 
             case "StockReserved" -> new StockReserved(
@@ -95,6 +96,7 @@ public class OutboxProcessor {
                 orderId,
                 productId,
                 quantity,
+                totalPrice,
                 error       
             );
 
@@ -142,6 +144,13 @@ public class OutboxProcessor {
             .filter(ctx -> fieldName.equals(ctx.getFieldName()))
             .findFirst()
             .map(OutboxEventContext::getFieldValue)
+            .orElse(null);
+    }
+    private Double getDouble(java.util.List<OutboxEventContext> contexts, String fieldName) {
+        return contexts.stream()
+            .filter(ctx -> fieldName.equals(ctx.getFieldName()))
+            .findFirst()
+            .map(ctx -> Double.valueOf(ctx.getFieldValue()))
             .orElse(null);
     }
 

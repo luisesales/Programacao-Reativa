@@ -3,9 +3,9 @@ package com.ecommerce.order.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.order.component.EventPublisher;
 import com.ecommerce.order.event.OrderCancelled;
@@ -16,6 +16,7 @@ import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.TransactionApproved;
 import com.ecommerce.order.event.TransactionRejected;
 import com.ecommerce.order.model.Order;
+import com.ecommerce.order.model.SagaMutator;
 import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 import com.ecommerce.order.model.saga.SagaContext;
 import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
@@ -90,26 +91,40 @@ public class SagaService {
     }
 
 
-    public Mono<SagaInstance> transitionState(
-            UUID sagaId,
-            SagaState newState,
-            Consumer<SagaInstance> mutator
-    ) {
-        return sagaRepository.findById(sagaId)
-            .flatMap(saga -> {
+    @Transactional
+public Mono<SagaInstance> transitionState(
+        UUID sagaId,
+        SagaState newState,
+        SagaMutator mutator
+) {
+    return sagaRepository.findById(sagaId)
+        .switchIfEmpty(Mono.error(new RuntimeException("Saga not found")))
+        .flatMap(instance ->
+            sagaContextRepository.findBySagaId(sagaId)                
+                .defaultIfEmpty(new SagaContext(sagaId))
+                .flatMap(context -> {
 
-                // idempotência
-                if (saga.getState() == newState) return Mono.just(saga);
+                    // Idempotência
+                    if (instance.getState() == newState) {
+                        return Mono.just(instance);
+                    }
+                    
+                    if (mutator != null) {
+                        mutator.apply(instance, context);
+                    }
 
-                // atualiza context se necessário
-                if (mutator != null) mutator.accept(saga);
+                    instance.setState(newState);
+                    instance.setUpdatedAt(Instant.now());
+                    
+                    return sagaRepository.save(instance)
+                        .flatMap(savedInstance ->
+                            sagaContextRepository.save(context)
+                                .thenReturn(savedInstance)
+                        );
+                })
+        );
+}
 
-                saga.setState(newState);
-                saga.setUpdatedAt(Instant.now());
-
-                return sagaRepository.save(saga);
-            });
-    }
 
     public Mono<SagaInstance> onOrderCreated(OrderCreated event) {
         return transitionState(
@@ -122,7 +137,9 @@ public class SagaService {
         return transitionState(
             event.sagaId(),
             SagaState.TRANSACTION_CONFIRMED,
-            null
+            (instance, context) -> {
+                context.setTransactionId(event.transactionId());                
+            }
         );
     }
     public Mono<SagaInstance> onTransactionRejected(TransactionRejected event) {
@@ -136,7 +153,9 @@ public class SagaService {
         return transitionState(
             event.sagaId(),
             SagaState.STOCK_RESERVED,
-            null
+            (instance, context) -> {
+                context.setStockReservationId(event.productId());
+            }
         );
     }
     public Mono<SagaInstance> onStockRejected(StockRejected event) {
@@ -179,6 +198,16 @@ public class SagaService {
     public Mono<SagaContext> findContextBySagaId(UUID sagaId){
         return sagaContextRepository.findBySagaId(sagaId);
     } 
+
+    @Transactional
+    public void saveAll(
+        List<SagaInstance> instances,
+        List<SagaContext> contexts
+    ) {
+        sagaRepository.saveAll(instances);
+        sagaContextRepository.saveAll(contexts);
+    }
+
     
     // public Mono<SagaInstance> save(SagaInstance saga) {
     //     return sagaRepository.save(saga);
