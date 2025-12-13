@@ -31,7 +31,7 @@ public class OrderOrchestrator {
     public Mono<Void> handle(DomainEvent event) {
     return switch (event) {
 
-        // === ETAPA 1 — inicia pagamento ===
+        // ETAPA 1 — inicia pagamento 
         case OrderCreated evt -> sagaService.onOrderCreated(evt)
             .then(Mono.fromRunnable(() ->
                 eventPublisher.publish(new TransactionRequested(
@@ -39,7 +39,7 @@ public class OrderOrchestrator {
                 ))
             ));
 
-        // === ETAPA 2 — inicia reserva de estoque ===
+        // ETAPA 2 — inicia reserva de estoque 
         case TransactionApproved evt -> sagaService.onTransactionApproved(evt)
             .then(sagaService.getProductsQuantityById(evt.sagaId()))
             .doOnNext(products ->

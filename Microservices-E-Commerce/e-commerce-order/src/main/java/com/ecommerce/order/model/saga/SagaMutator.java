@@ -1,10 +1,6 @@
-package com.ecommerce.order.model;
+package com.ecommerce.order.model.saga;
 
 import java.Lang.FunctionalInterface;
-
-import com.ecommerce.order.model.saga.SagaInstance;
-import com.ecommerce.order.model.saga.SagaContext;
-import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 
 @FunctionalInterface
 public interface SagaMutator {

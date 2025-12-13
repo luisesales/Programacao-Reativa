@@ -12,5 +12,4 @@ public interface SagaContextRepository extends R2dbcRepository<SagaContext, UUID
     Mono<SagaContext> findBySagaId(UUID sagaId);
     Mono<SagaContext> findByOrderId(UUID orderId);
     Mono<SagaContext> findByTransactionId(UUID transactionId);
-    Mono<SagaContext> findByStockReservationId(UUID stockReservationId);
 }

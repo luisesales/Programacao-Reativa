@@ -11,6 +11,4 @@ import reactor.core.publisher.Mono;
 public interface SagaRepository extends R2dbcRepository<SagaInstance, UUID> {
 
     Mono<SagaInstance> findBySagaId(UUID sagaId);
-
-    Mono<SagaInstance> findByOrderId(UUID orderId);
 }

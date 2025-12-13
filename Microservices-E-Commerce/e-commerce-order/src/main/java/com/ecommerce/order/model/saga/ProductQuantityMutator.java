@@ -1,6 +1,6 @@
 package com.ecommerce.order.model.saga;
 
 @FunctionalInterface
-public class ProdcutQuantityMutator {
-    
+public interface  ProductQuantityMutator {
+    void apply(SagaContextProductsQuantity instance);
 }
