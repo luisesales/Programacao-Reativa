@@ -17,12 +17,14 @@ import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.TransactionApproved;
 import com.ecommerce.order.event.TransactionRejected;
 import com.ecommerce.order.model.Order;
-import com.ecommerce.order.model.SagaMutator;
 import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 import com.ecommerce.order.model.saga.SagaContext;
 import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 import com.ecommerce.order.model.saga.SagaInstance;
+import com.ecommerce.order.model.saga.SagaMutator;
 import com.ecommerce.order.model.saga.SagaState;
+import com.ecommerce.order.model.saga.ProductQuantityMutator;
+import com.ecommerce.order.model.saga.ProductStatus;
 import com.ecommerce.order.repository.SagaContextProductsQuantityRepository;
 import com.ecommerce.order.repository.SagaContextRepository;
 import com.ecommerce.order.repository.SagaRepository;
@@ -93,11 +95,13 @@ public class SagaService {
 
 
     @Transactional
-public Mono<SagaInstance> transitionState(
-        DomainEvent event,
-        SagaState newState,
-        SagaMutator mutator
-) {
+    public Mono<SagaInstance> transitionState(
+            UUID sagaId,
+            SagaState newState,
+            SagaMutator mutator,
+            ProductQuantityMutator productQuantityMutator,
+            UUID productId
+    ) {
     return sagaRepository.findById(sagaId)
         .switchIfEmpty(Mono.error(new RuntimeException("Saga not found")))
         .flatMap(instance ->
@@ -109,13 +113,17 @@ public Mono<SagaInstance> transitionState(
                     if (instance.getState() == newState) {
                         return Mono.just(instance);
                     }
-                    sagaContextProductsQuantityRepository.findBySagaContextIdProdId(context.getId())
+                    
                     if (mutator != null) {
                         mutator.apply(instance, context);
                     }
 
                     instance.setState(newState);
                     instance.setUpdatedAt(Instant.now());
+
+                    if(productQuantityMutator != null){
+                        updateProductsQuantity(context.getId(),productQuantityMutator,productId);
+                    }
                     
                     return sagaRepository.save(instance)
                         .flatMap(savedInstance ->
@@ -131,6 +139,8 @@ public Mono<SagaInstance> transitionState(
         return transitionState(
             event.sagaId(),
             SagaState.ORDER_CREATED,
+            null,
+            (instance) -> instance.setStatus(ProductStatus.REQUESTED),
             null
         );
     }
@@ -140,13 +150,19 @@ public Mono<SagaInstance> transitionState(
             SagaState.TRANSACTION_CONFIRMED,
             (instance, context) -> {
                 context.setTransactionId(event.transactionId());                
-            }
+            },
+            null,
+            null
         );
     }
     public Mono<SagaInstance> onTransactionRejected(TransactionRejected event) {
         return transitionState(
             event.sagaId(),
             SagaState.TRANSACTION_FAILED,
+            null,
+            (instance) -> {
+                instance.setStatus(ProductStatus.ERROR);
+            },
             null
         );
     }
@@ -154,29 +170,42 @@ public Mono<SagaInstance> transitionState(
         return transitionState(
             event.sagaId(),
             SagaState.STOCK_RESERVED,
-            (instance, context) -> {
-                context.setStockReservationId(event.productId());
-            }
+            null,
+            (instance) -> {
+                instance.setStatus(ProductStatus.APPROVED);
+            },
+            event.productId()
         );
     }
     public Mono<SagaInstance> onStockRejected(StockRejected event) {
         return transitionState(
             event.sagaId(),
             SagaState.STOCK_FAILED,
-            null
+            null,
+            (instance) -> {
+                instance.setError(event.reason());
+                instance.setStatus(ProductStatus.REJECTED);
+            },
+            event.productId()
         );
     }
     public Mono<SagaInstance> onOrderCompleted(OrderCompleted event) {
         return transitionState(
             event.sagaId(),
             SagaState.ORDER_COMPLETED,
-            null
+            null,
+            null,
+            null          
         );
     }
     public Mono<SagaInstance> onOrderCancelled(OrderCancelled event) {
         return transitionState(
             event.sagaId(),
             SagaState.ORDER_COMPENSATED,
+            null,
+            (instance) -> {
+                instance.setStatus(ProductStatus.ERROR);
+            },
             null
         );
     }
@@ -203,11 +232,24 @@ public Mono<SagaInstance> transitionState(
     @Transactional
     public void saveAll(
         List<SagaInstance> instances,
-        List<SagaContext> contexts,
-        List<SagaContextProductsQuantity> productsQuantity
+        List<SagaContext> contexts        
     ) {
         sagaRepository.saveAll(instances);
         sagaContextRepository.saveAll(contexts);
+    }
+
+    private Mono<Void> updateProductsQuantity(UUID sagaContextId, ProductQuantityMutator mutator, UUID productId){
+        return (productId == null
+            ? sagaContextProductsQuantityRepository
+                .findBySagaContextId(sagaContextId)
+            : sagaContextProductsQuantityRepository
+                .findBySagaContextIdProdId(sagaContextId, productId)
+        )
+        .flatMap(pq ->
+            mutator.apply(pq)
+                .then(sagaContextProductsQuantityRepository.save(pq))
+        )
+        .then();
     }
 
     

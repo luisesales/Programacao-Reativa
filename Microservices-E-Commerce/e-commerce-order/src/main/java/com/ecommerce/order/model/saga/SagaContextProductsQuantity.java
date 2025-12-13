@@ -28,18 +28,14 @@ public class SagaContextProductsQuantity {
     private ProductStatus status;
 
     @Column("error")
-    private String error;
-
-    @Column("stock_reservation_id")
-    private UUID stockReservationId;
+    private String error;    
 
     public SagaContextProductsQuantity(UUID sagaContextId, UUID productId, int quantity){
         this.sagaContextId = sagaContextId;
         this.productId = productId;
         this.quantity = quantity;
         this.status = ProductStatus.REQUESTED;
-        this.error = "";
-        this.stockReservationId = null;
+        this.error = "";        
     }
 
     public SagaContextProductsQuantity(UUID sagaContextId, ProductQuantityInputDTO dto){
@@ -67,15 +63,11 @@ public class SagaContextProductsQuantity {
     public void setError(String error){
         this.error = error;
     }    
-    public void setStockReservationId(UUID stockReservationId){
-        this.stockReservationId = stockReservationId;
-    }
     public UUID getId(){ return id; }
     public UUID getSagaContextId(){ return sagaContextId; }
     public UUID getProductId(){ return productId; }
     public ProductStatus getProductStatus(){ return this.status; }
     public String getError(){ return this.error; }
-    public UUID getStockReservationId(){ return this.stockReservationId; }
     public ProductQuantityInputDTO toProductQuantityInputDTO(){ return new ProductQuantityInputDTO(this.productId, this.quantity); }
     
 }

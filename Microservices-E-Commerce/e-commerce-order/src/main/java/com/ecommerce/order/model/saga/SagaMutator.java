@@ -8,6 +8,6 @@ import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 
 @FunctionalInterface
 public interface SagaMutator {
-    void apply(SagaInstance instance, SagaContext context, SagaContextProductsQuantity productsQuantity);
+    void apply(SagaInstance instance, SagaContext context);
 }
 

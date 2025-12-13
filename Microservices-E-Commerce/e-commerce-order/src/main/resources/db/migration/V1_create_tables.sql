@@ -38,8 +38,7 @@ CREATE TABLE IF NOT EXISTS saga_context_products_quantity (
     saga_context_id UUID NOT NULL,
     product_id UUID NOT NULL,
     quantity INT NOT NULL,
-    status VARCHAR(255) NOT NULL,
-    stock_reservation_id UUID,
+    status VARCHAR(255) NOT NULL,    
     error VARCHAR(255)
 
     CONSTRAINT fk_saga_ctx_product
