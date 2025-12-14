@@ -155,7 +155,11 @@ public class SagaService {
                             sagaContextRepository.save(context)
                             .doOnSuccess(saved -> logger.info("SagaContext with id {} for Saga with id {} updated succesfully", saved.getId(),saved.getSagaId()))
                                 .thenReturn(savedInstance)
-                        ).doOnSuccess(saved -> logger.info("Saga with id {} updated succesfully", saved.getSagaId()));
+                        ).doOnSuccess(saved -> logger.info("Saga with id {} updated succesfully", saved.getSagaId()))
+                        .onErrorResume(e -> {
+                            logger.error("Error updating Saga with id {} to database: {}",sagaId,e);
+                            return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error updating Saga with id " + sagaId + " to database: " + e));
+                        });
                 })
         );
 }
@@ -271,12 +275,26 @@ public class SagaService {
             sagaContextProductsQuantityRepository.findBySagaContextId(context.getId())
                 .map(SagaContextProductsQuantity::toProductQuantityInputDTO)
                 .collectList()
-        ).doOnSuccess(saga -> logger.info("SagaProductsQuantity found with sagaId {}",sagaId));
+        ).doOnSuccess(saga -> logger.info("SagaContextProductsQuantity found with sagaId {}",sagaId))
+        .onErrorResume(e -> {
+                logger.error("Error fetching SagaContextProductsQuantity with sagaId {} with error: {}",sagaId,e);
+                return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching SagaContextProductsQuantityContext with sagaId " + sagaId + " with error: " + e));
+            });
     }
 
     public Mono<SagaContext> findContextBySagaId(UUID sagaId){
         logger.info("Fetching SagaContext for Saga with id {}",sagaId);
-        return sagaContextRepository.findBySagaId(sagaId);
+        return sagaContextRepository.findBySagaId(sagaId)
+            .switchIfEmpty(
+                Mono.defer(() -> {
+                    logger.error("SagaContext with sagaId {} not found",sagaId);
+                    return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "SagaContext with sagaId "+ sagaId + " not found"));
+                })
+            )
+            .onErrorResume(e -> {
+                logger.error("Error fetching SagaContext with sagaId {} with error: {}",sagaId,e);
+                return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching SagaContext with sagaId " + sagaId + " with error: " + e));
+            });
     } 
 
     @Transactional
@@ -312,9 +330,13 @@ public class SagaService {
                 .findBySagaContextIdProdId(sagaContextId, productId)
         )
         .flatMap(pq -> {
-            logger.info("Updating SagaContextProductQuantity with productId {} for SagaContext with {}", pq.getProductId(), sagaContextId);
+            logger.info("Updating SagaContextProductsQuantity with productId {} for SagaContext with {}", pq.getProductId(), sagaContextId);
             mutator.apply(pq)
-                .then(sagaContextProductsQuantityRepository.save(pq));
+                .then(sagaContextProductsQuantityRepository.save(pq))
+                .onErrorResume(e -> {
+                    logger.error("Error updating SagaContextProductsQuantity with sagaContextId {} and productId {} with error: {}",sagaContextId,pq.getProductId(),e);
+                    return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error updating SagaContextProductsQuantity with sagaContextId " + sagaContextId + " and productId " + pq.getProductId() + " with error: " + e));
+                });
         })
         .then();
     }
