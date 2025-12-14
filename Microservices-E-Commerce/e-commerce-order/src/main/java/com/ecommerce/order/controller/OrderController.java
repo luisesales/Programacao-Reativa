@@ -22,6 +22,7 @@ import com.ecommerce.order.model.Product;
 import com.ecommerce.order.model.dto.OrderDTO;
 import com.ecommerce.order.model.dto.OrderInputDTO;
 import com.ecommerce.order.model.saga.OrderResultSaga;
+import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 import com.ecommerce.order.service.OrderService;
 
 import reactor.core.publisher.Flux;
@@ -75,6 +76,13 @@ public class OrderController {
             return orderService.createOrder(order);
         });        
     }*/
+
+    @GetMapping(path = "/{id}/status", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<SagaContextProductsQuantity> getOrderStatus(@PathVariable UUID orderId) {
+        return orderService.getOrderStatus(orderId);
+    }
+    
+    
    @PostMapping
    public Mono<ResponseEntity<OrderResultSaga>> createOrder(@RequestBody Mono<OrderInputDTO> orderMono){
     

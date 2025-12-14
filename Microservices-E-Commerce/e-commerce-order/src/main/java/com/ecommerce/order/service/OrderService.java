@@ -21,6 +21,7 @@ import com.ecommerce.order.model.dto.OrderDTO;
 import com.ecommerce.order.model.dto.OrderInputDTO;
 import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
 import com.ecommerce.order.model.saga.OrderResultSaga;
+import com.ecommerce.order.model.saga.SagaContextProductsQuantity;
 import com.ecommerce.order.repository.OrderItemRepository;
 import com.ecommerce.order.repository.OrderRepository;
 
@@ -302,6 +303,11 @@ public class OrderService {
                                              logger.error(msg + " Error: {}", ex.getMessage(), ex);
                                              return Mono.just(false);
                                          }));
+    }
+
+    public Flux<SagaContextProductsQuantity> getOrderStatus(UUID orderId){
+        logger.info("Fetching Order products status for order with id: {}", orderId);
+        return sagaService.findProductsQuantityByOrderId(orderId);
     }
 } 
     
