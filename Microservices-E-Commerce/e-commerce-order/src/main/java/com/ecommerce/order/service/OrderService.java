@@ -20,6 +20,7 @@ import com.ecommerce.order.model.Product;
 import com.ecommerce.order.model.dto.OrderDTO;
 import com.ecommerce.order.model.dto.OrderInputDTO;
 import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
+import com.ecommerce.order.model.saga.OrderResultSaga;
 import com.ecommerce.order.repository.OrderItemRepository;
 import com.ecommerce.order.repository.OrderRepository;
 
@@ -131,10 +132,95 @@ public class OrderService {
         });   
     }
 
-    public Flux<OrderResult> createOrderDTO(OrderInputDTO order) {
+    // public Flux<OrderResult> createOrderDTO(OrderInputDTO order) {
+    //     if (order == null) {
+    //         logger.warn("Order request is empty or invalid.");
+    //         return Flux.error(new ResponseStatusException(
+    //                 HttpStatus.BAD_REQUEST, "Request body is missing"
+    //         ));
+    //     }
+    //     if(
+    //         order.name() == null ||             
+    //         order.productsQuantity() == null ||
+    //         order.totalPrice() == null
+    //     )
+    //     {
+    //         logger.warn("Order request is empty or invalid.");
+    //         return Flux.error(new ResponseStatusException(                
+    //                 HttpStatus.BAD_REQUEST, "Invalid request body: missing required fields"
+    //         ));
+    //     }        
+
+    //     return createOrder(new Order
+    //         (                                
+    //             order.name(),                
+    //             order.totalPrice(),
+    //             new HashMap(order.productsQuantity().stream()
+    //             .collect(Collectors.toMap(
+    //                 ProductQuantityInputDTO::productId,
+    //                 ProductQuantityInputDTO::quantity
+    //             )))
+    //         )
+    //     );        
+    // }
+
+    // public Flux<OrderResult> createOrder(Order order) {
+    //     logger.info("Creating new order reactive: {}", order.getId());
+    //     if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
+    //         logger.warn("Order request is empty or invalid.");
+    //         return Flux.error(new ResponseStatusException(
+    //             HttpStatus.BAD_REQUEST,
+    //             "Invalid order request: missing products."
+    //         ));
+    //     }
+    //     logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
+    //     return productHttpInterface.orderProduct(Mono.just(order))        
+    //         .flatMap(orderResult -> {
+    //             if (!orderResult.isSuccess()) {
+    //                 logger.error("Failed to order products for order id: {}", order.getId());
+    //                 return Flux.concat(
+    //                     Flux.just(orderResult),
+    //                     Flux.error(new ResponseStatusException(
+    //                         HttpStatus.SERVICE_UNAVAILABLE,
+    //                         "Failed to order products for order id: " + order.getId()
+    //                     ))
+    //                 );
+    //             }
+    //             return orderRepository.save(order)   
+    //                 .flatMapMany(savedOrder -> {                                                        
+    //                     return Flux.fromIterable(order.getProductsQuantity().entrySet())
+    //                         .map(entry -> new OrderItem(savedOrder.getId(), entry.getKey(), entry.getValue()))
+    //                         .flatMap(orderItemRepository::save)
+    //                         .doOnNext(savedItem -> {                                         
+    //                             logger.info("Order item saved successfully: {} for order id: {}", savedItem.getProductId(), savedItem.getOrderId());
+    //                         })
+    //                         .onErrorResume(e -> {
+    //                             logger.error("Error saving order item for order id {}: {}", savedOrder.getId(), e.getMessage(), e);
+    //                             return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving order items: " + e.getMessage(), e));
+    //                         })                            
+    //                         .thenMany(Flux.just(orderResult));
+    //                 })                                            
+    //                 .onErrorResume(e -> {
+    //                     logger.error("Error creating order: {}", e.getMessage(), e);
+    //                     return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
+    //                 }).doOnComplete(() -> {
+    //                     logger.info("Order created successfully with id: {}", order.getId());
+    //                 });
+                                                    
+    //         })      
+              
+    //         .onErrorResume(e -> {
+    //             logger.error("Error creating order: {}", e.getMessage());
+    //             OrderResult errorResult = new OrderResult(false, "Error creating order: " + e.getMessage(), new Product());            
+    //             return Flux.error(
+    //                 new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
+    //             );                       
+    //         });   
+    // }
+    public Mono<OrderResultSaga> createOrder(OrderInputDTO order){
         if (order == null) {
             logger.warn("Order request is empty or invalid.");
-            return Flux.error(new ResponseStatusException(
+            return Mono.error(new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Request body is missing"
             ));
         }
@@ -145,12 +231,11 @@ public class OrderService {
         )
         {
             logger.warn("Order request is empty or invalid.");
-            return Flux.error(new ResponseStatusException(                
+            return Mono.error(new ResponseStatusException(                
                     HttpStatus.BAD_REQUEST, "Invalid request body: missing required fields"
             ));
-        }        
-
-        return createOrder(new Order
+        }
+        return processOrder(new Order
             (                                
                 order.name(),                
                 order.totalPrice(),
@@ -159,65 +244,19 @@ public class OrderService {
                     ProductQuantityInputDTO::productId,
                     ProductQuantityInputDTO::quantity
                 )))
-            )
-        );        
-    }
-
-    public Flux<OrderResult> createOrder(Order order) {
-        logger.info("Creating new order reactive: {}", order.getId());
-        if (order.getProductsQuantity() == null || order.getProductsQuantity().isEmpty()) {
-            logger.warn("Order request is empty or invalid.");
-            return Flux.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Invalid order request: missing products."
             ));
-        }
-        logger.info("Order processed successfully for products: {}", order.getProductsQuantity());
-        return productHttpInterface.orderProduct(Mono.just(order))        
-            .flatMap(orderResult -> {
-                if (!orderResult.isSuccess()) {
-                    logger.error("Failed to order products for order id: {}", order.getId());
-                    return Flux.concat(
-                        Flux.just(orderResult),
-                        Flux.error(new ResponseStatusException(
-                            HttpStatus.SERVICE_UNAVAILABLE,
-                            "Failed to order products for order id: " + order.getId()
-                        ))
-                    );
-                }
-                return orderRepository.save(order)   
-                    .flatMapMany(savedOrder -> {                                                        
-                        return Flux.fromIterable(order.getProductsQuantity().entrySet())
-                            .map(entry -> new OrderItem(savedOrder.getId(), entry.getKey(), entry.getValue()))
-                            .flatMap(orderItemRepository::save)
-                            .doOnNext(savedItem -> {                                         
-                                logger.info("Order item saved successfully: {} for order id: {}", savedItem.getProductId(), savedItem.getOrderId());
-                            })
-                            .onErrorResume(e -> {
-                                logger.error("Error saving order item for order id {}: {}", savedOrder.getId(), e.getMessage(), e);
-                                return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving order items: " + e.getMessage(), e));
-                            })                            
-                            .thenMany(Flux.just(orderResult));
-                    })                                            
-                    .onErrorResume(e -> {
-                        logger.error("Error creating order: {}", e.getMessage(), e);
-                        return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error Creating Order with message: " + e.getMessage(), e));
-                    }).doOnComplete(() -> {
-                        logger.info("Order created successfully with id: {}", order.getId());
-                    });
-                                                    
-            })      
-              
-            .onErrorResume(e -> {
-                logger.error("Error creating order: {}", e.getMessage());
-                OrderResult errorResult = new OrderResult(false, "Error creating order: " + e.getMessage(), new Product());            
-                return Flux.error(
-                    new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating order: " + errorResult.getResponse(), e)
-                );                       
-            });   
     }
 
-    
+    private Mono<OrderResultSaga> processOrder(Order order){
+        return sagaService.startSagaForOrderReactive(order)
+            .flatMap(sagaInstance -> 
+               Mono.just(new OrderResultSaga(
+                        sagaInstance.getSagaId(),
+                        order.getId(),
+                        sagaInstance.getState()
+                    )) 
+            );
+    }
 
 
 

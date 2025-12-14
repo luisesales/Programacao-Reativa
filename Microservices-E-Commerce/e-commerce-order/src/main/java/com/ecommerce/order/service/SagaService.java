@@ -51,8 +51,10 @@ public class SagaService {
     public Mono<SagaInstance> startSagaForOrderReactive(Order order) {
         UUID orderId = order.getId();
 
-        return sagaRepository.findByOrderId(orderId)
+        return sagaContextRepository.findByOrderId(orderId)
+            .flatMap(context-> sagaRepository.findById(context.getSagaId()))
             .switchIfEmpty(createAndPublishSaga(order));
+            
     }
 
     private Mono<SagaInstance> createAndPublishSaga(Order order) {
@@ -209,11 +211,25 @@ public class SagaService {
             null
         );
     }
-    public Mono<SagaInstance> findById(UUID sagaId) {
-        return sagaRepository.findById(sagaId);
+    public Mono<SagaInstance> findById(UUID sagaId) {        
+        return sagaContextRepository.findBySagaId(sagaId)
+        .flatMap(context ->
+            sagaRepository.findById(context.getSagaId())
+                .map(saga -> {
+                    saga.setContext(context);
+                    return saga;
+                })
+        );
     }
     public Mono<SagaInstance> findByOrderId(UUID orderId) {
-        return sagaRepository.findByOrderId(orderId);
+        return sagaContextRepository.findByOrderId(orderId)
+        .flatMap(context ->
+            sagaRepository.findById(context.getSagaId())
+                .map(saga -> {
+                    saga.setContext(context);
+                    return saga;
+                })
+        );
     }
 
     public Mono<List<ProductQuantityInputDTO>> getProductsQuantityById(UUID sagaId){

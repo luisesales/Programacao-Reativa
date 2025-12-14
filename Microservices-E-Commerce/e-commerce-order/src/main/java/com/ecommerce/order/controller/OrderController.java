@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,9 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.order.model.Order;
-import com.ecommerce.order.model.OrderResult;
 import com.ecommerce.order.model.Product;
 import com.ecommerce.order.model.dto.OrderDTO;
+import com.ecommerce.order.model.dto.OrderInputDTO;
+import com.ecommerce.order.model.saga.OrderResultSaga;
 import com.ecommerce.order.service.OrderService;
 
 import reactor.core.publisher.Flux;
@@ -30,7 +32,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
-    @Autowired
+
     private final OrderService orderService;
 
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
@@ -61,7 +63,7 @@ public class OrderController {
         return orderService.getProductsByCategory(category);
     }
 
-    @PostMapping
+    /*@PostMapping
     public Flux<OrderResult> createOrder(@RequestBody Mono<Order> orderMono) {
         return orderMono
         .switchIfEmpty(Mono.error(new ResponseStatusException(
@@ -72,5 +74,16 @@ public class OrderController {
             logger.info("Request received to order products: {} with price: {}",order.getName(), order.getTotalPrice());            
             return orderService.createOrder(order);
         });        
-    }
+    }*/
+   @PostMapping
+   public Mono<ResponseEntity<OrderResultSaga>> createOrder(@RequestBody Mono<OrderInputDTO> orderMono){
+    
+    return orderMono
+        .flatMap(order -> orderService.createOrder(order))
+        .map(orderResult ->
+            ResponseEntity
+                .accepted()
+                .body(orderResult)
+        );
+}
 }
