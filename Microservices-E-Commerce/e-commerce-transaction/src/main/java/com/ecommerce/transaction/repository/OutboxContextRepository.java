@@ -30,5 +30,5 @@ public interface OutboxContextRepository extends R2dbcRepository<OutboxEventCont
  Flux<OutboxEventContext> findByOutboxEventIdIn(List<UUID> ids);
  Mono<Void> deleteByOutboxEventId(UUID eventId);
  Mono<Void> deleteByOutboxEventIdIn(List<UUID> eventIds);
- Flux<OutboxEventContext> findByOrderId(UUID orderId);
+ //  Flux<OutboxEventContext> findByOrderId(UUID orderId);
 }

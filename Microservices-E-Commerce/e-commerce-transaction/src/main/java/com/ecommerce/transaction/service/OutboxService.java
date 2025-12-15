@@ -100,9 +100,9 @@ public class OutboxService {
         return outboxRepository.findById(outboxId);
     }
 
-    public Flux<OutboxEventContext> findByOrderId(UUID orderId) {
-        return outboxContextRepository.findByOrderId(orderId);
-    }
+    // public Flux<OutboxEventContext> findByOrderId(UUID orderId) {
+    //     return outboxContextRepository.findByOrderId(orderId);
+    // }
 
     
 }
