@@ -16,13 +16,13 @@ CREATE TABLE outbox_event (
     published_at TIMESTAMP NULL,
     last_attempt_at TIMESTAMP NULL,
     last_error VARCHAR(500) NULL,
-    retry_count INT DEFAULT 0,
+    retry_count INT DEFAULT 0
 );
 
 CREATE TABLE outbox_event_context (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     outbox_event_id UUID NOT NULL REFERENCES outbox_event(id) ON DELETE CASCADE,
     field_name VARCHAR(255) NOT NULL,
-    field_value VARCHAR(255) NOT NULL
+    field_value VARCHAR(255) NOT NULL,
     transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE
 );

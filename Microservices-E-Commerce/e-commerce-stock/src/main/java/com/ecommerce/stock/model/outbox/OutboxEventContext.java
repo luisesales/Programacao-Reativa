@@ -2,21 +2,9 @@ package com.ecommerce.stock.model.outbox;
 
 import java.util.UUID;
 
-import com.ecommerce.stock.event.StockReserved;
-import com.ecommerce.stock.model.Product;
-import com.ecommerce.stock.model.Order;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import com.ecommerce.stock.event.DomainEvent;
-import com.ecommerce.stock.event.StockRequested;
-import com.ecommerce.stock.event.StockRejected;
-import com.ecommerce.stock.event.StockReserved;
-import com.ecommerce.stock.event.StockIncreaseRequested;
-import com.ecommerce.stock.event.StockIncreaseApproved;
-import com.ecommerce.stock.event.StockIncreaseRejected;
 
 @Table("outbox_event_context")
 public class OutboxEventContext {

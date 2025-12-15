@@ -99,16 +99,16 @@ public class ProductController {
                                 
     }
 
-    @PostMapping(path = "/order", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<OrderResult> orderProduct(@RequestBody Mono<Order> monoOrder) {
-        return monoOrder
-            .switchIfEmpty(Mono.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Order body is missing"
-            )))
-            .flatMapMany(order -> {
-                logger.info("Request received to order products: {} with price: {}", order.getName(), order.getTotalPrice());                
-                return productService.buyProducts(order); 
-            });
-    }
+    // @PostMapping(path = "/order", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    // public Flux<OrderResult> orderProduct(@RequestBody Mono<Order> monoOrder) {
+    //     return monoOrder
+    //         .switchIfEmpty(Mono.error(new ResponseStatusException(
+    //             HttpStatus.BAD_REQUEST,
+    //             "Order body is missing"
+    //         )))
+    //         .flatMapMany(order -> {
+    //             logger.info("Request received to order products: {} with price: {}", order.getName(), order.getTotalPrice());                
+    //             return productService.buyProducts(order); 
+    //         });
+    // }
 }

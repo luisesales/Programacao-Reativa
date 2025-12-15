@@ -29,9 +29,14 @@ public class SagaInstance {
     @Version
     private Long version; 
 
-    public SagaInstance() {
-        this.sagaId = UUID.randomUUID();
-        this.context = new SagaContext(sagaId);
+    public static SagaInstance create(SagaState initialState) {
+        SagaInstance saga = new SagaInstance();
+        saga.setState(initialState);
+        return saga;
+    }
+
+
+    public SagaInstance() {            
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
         this.version = 0L;
@@ -75,9 +80,5 @@ public class SagaInstance {
 
     public Long getVersion() { 
         return version; 
-    }
-
-    public void incrementVersion() { 
-        this.version++; 
     }
 }

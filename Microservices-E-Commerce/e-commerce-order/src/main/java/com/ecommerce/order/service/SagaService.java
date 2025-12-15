@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 
 import com.ecommerce.order.component.EventPublisher;
@@ -35,6 +36,8 @@ import com.ecommerce.order.repository.SagaRepository;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuples;
 
 @Service
 public class SagaService {
@@ -63,106 +66,82 @@ public class SagaService {
         return sagaContextRepository.findByOrderId(orderId)
             .flatMap(context-> {
                 logger.info("Saga already created for order with id {}", orderId);
-                sagaRepository.findById(context.getSagaId());
+                return sagaRepository.findById(context.getSagaId());
             })
             .switchIfEmpty(createAndPublishSaga(order));
             
     }
 
-    private Mono<SagaInstance> createAndPublishSaga(Order order) {
-        logger.info("Creating new Saga for order with id {}", order.getId());
-        SagaInstance saga = new SagaInstance();        
-        saga.setState(SagaState.ORDER_CREATED);
+    public Mono<SagaInstance> createAndPublishSaga(Order order) {
 
-        SagaContext context = new SagaContext(saga.getSagaId());
-        context.setOrderId(order.getId());
-        context.setTotalPrice(order.getTotalPrice());        
-        saga.setContext(context);
-        
-        Flux.fromIterable(order.getProductsQuantity().entrySet())
-        .map(e -> new SagaContextProductsQuantity(
-                context.getId(),
-                e.getKey(),
-                e.getValue()
-        ))
-        .flatMap(sagaContextProductsQuantityRepository::save)
-        .map(saved -> saved.toProductQuantityInputDTO())
-        .collectList()           
-        .doOnNext(list -> {
-            
-            context.setProductsQuantity(list);
-        });
+        SagaInstance saga = SagaInstance.create(SagaState.ORDER_CREATED);
 
         return sagaRepository.save(saga)
-            .flatMap(saved -> {
-                OrderCreated event = new OrderCreated(
-                        saved.getSagaId(),
-                        context.getOrderId(),
-                        saved.getContext().getName(),
-                        context.getTotalPrice(),
-                        context.getProductsQuantity()
-                );
-                eventPublisher.publish(event);
-                return Mono.just(saved);
-            })
-            .doOnSuccess(saved -> logger.info("Saga created succesfuly with sagaId {}",saved.getSagaId()));
+            .flatMap(savedSaga ->
+                sagaContextRepository.save(
+                    SagaContext.from(order, savedSaga.getSagaId())
+                )
+                .flatMap(context ->
+                    Flux.fromIterable(order.getProductsQuantity().entrySet())
+                        .flatMap(e ->
+                            sagaContextProductsQuantityRepository.save(
+                                SagaContextProductsQuantity.from(context, e)
+                            )
+                        )
+                        .thenReturn(savedSaga)
+                )
+            )
+            .doOnSuccess(savedSaga ->
+                eventPublisher.publish(
+                    new OrderCreated(
+                        savedSaga.getSagaId(),
+                        order.getId(),
+                        order.getName(),
+                        order.getTotalPrice(),
+                        order.getProductsQuantity()
+                    )
+                )
+            );
     }
 
 
-    @Transactional
+
+
+
     public Mono<SagaInstance> transitionState(
-            UUID sagaId,
-            SagaState newState,
-            SagaMutator mutator,
-            ProductQuantityMutator productQuantityMutator,
-            UUID productId
+        UUID sagaId,
+        SagaState newState,
+        SagaMutator mutator,
+        ProductQuantityMutator productQuantityMutator,
+        UUID productId
     ) {
-    logger.info("Transctioning Saga with id {} to SagaState {}",sagaId,newState);
-    return sagaRepository.findById(sagaId)
-        .switchIfEmpty(
-            Mono.defer(() -> {
-                logger.error("Saga with id {} not found",sagaId);
-                return Mono.error(new RuntimeException("Saga not found"));
-            })
-        )            
-        .flatMap(instance ->
-            sagaContextRepository.findBySagaId(sagaId)                
-                .defaultIfEmpty(new SagaContext(sagaId))
-                .flatMap(context -> {
-                    logger.info("Starting update on SagaContext with orderId {} and sagaId {}",context.getOrderId(),sagaId);
+        logger.info("Transitioning saga {} to {}", sagaId, newState);
 
-                    // Idempotência
-                    if (instance.getState() == newState) {
-                        logger.info("Idempotency check triggered for Saga with orderId {} and sagaId {} stopping changes",context.getOrderId(),sagaId);
-                        return Mono.just(instance);
-                    }
-                    
-                    if (mutator != null) {
-                        logger.info("Updating Saga and SagaContext variables for Saga with id {}", sagaId);
-                        mutator.apply(instance, context);
-                    }
+        return advanceSagaState(sagaId, newState)
+            .flatMap(savedSaga ->
 
-                    instance.setState(newState);
-                    instance.setUpdatedAt(Instant.now());
+                sagaContextRepository.findBySagaId(sagaId)
+                    .flatMap(context -> {
 
-                    if(productQuantityMutator != null){
-                        logger.info("Updating SagaContextProductsQuantity for Saga with id {}", sagaId);
-                        updateProductsQuantity(context.getId(),productQuantityMutator,productId);
-                    }
-                    
-                    return sagaRepository.save(instance)
-                        .flatMap(savedInstance ->
-                            sagaContextRepository.save(context)
-                            .doOnSuccess(saved -> logger.info("SagaContext with id {} for Saga with id {} updated succesfully", saved.getId(),saved.getSagaId()))
-                                .thenReturn(savedInstance)
-                        ).doOnSuccess(saved -> logger.info("Saga with id {} updated succesfully", saved.getSagaId()))
-                        .onErrorResume(e -> {
-                            logger.error("Error updating Saga with id {} to database: {}",sagaId,e);
-                            return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error updating Saga with id " + sagaId + " to database: " + e));
-                        });
-                })
-        );
-}
+                        if (mutator != null) {
+                            mutator.apply(savedSaga, context);
+                        }
+
+                        Mono<Void> contextSave =
+                            sagaContextRepository.save(context).then();
+
+                        Mono<Void> productUpdate =
+                            productQuantityMutator != null
+                                ? updateProductsQuantity(context.getId(), productQuantityMutator, productId)
+                                : Mono.empty();
+
+                        return Mono.when(contextSave, productUpdate)
+                            .thenReturn(savedSaga);
+                    })
+            )
+            .doOnSuccess(s -> logger.info("Saga {} transitioned to {}", sagaId, newState));
+    }
+
 
 
     public Mono<SagaInstance> onOrderCreated(OrderCreated event) {
@@ -363,8 +342,26 @@ public class SagaService {
             });
     }
 
-    
-    // public Mono<SagaInstance> save(SagaInstance saga) {
-    //     return sagaRepository.save(saga);
-    // }
+    public Mono<SagaInstance> advanceSagaState(UUID sagaId, SagaState newState) {
+        return sagaRepository.findById(sagaId)
+            .switchIfEmpty(Mono.error(new IllegalStateException("Saga not found")))
+            .flatMap(saga -> {
+
+                if (saga.getState() == newState) {
+                    return Mono.just(saga);
+                }
+
+                saga.setState(newState);
+                saga.setUpdatedAt(Instant.now());
+
+                return sagaRepository.save(saga);
+            })
+            .retryWhen(
+                reactor.util.retry.Retry.max(3)
+                    .filter(e -> e instanceof OptimisticLockingFailureException)
+            );
+    }
+
+
+
 }

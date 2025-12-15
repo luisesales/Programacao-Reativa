@@ -34,6 +34,7 @@ public class Order{
     }
 
     public Order(String name, double totalPrice, HashMap<UUID,Integer> productsQuantity){
+        this.id = UUID.randomUUID();
         this.name = name;
         this.totalPrice = totalPrice;
         this.productsQuantity = productsQuantity;
