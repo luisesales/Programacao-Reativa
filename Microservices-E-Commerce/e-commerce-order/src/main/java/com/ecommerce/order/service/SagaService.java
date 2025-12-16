@@ -37,14 +37,13 @@ import com.ecommerce.order.repository.SagaRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuples;
 
 @Service
 public class SagaService {
-
-    private final AiHttpInterface aiHttpInterface;
+    
     private static final Logger logger = LoggerFactory.getLogger(SagaService.class);
 
+    private final AiHttpInterface aiHttpInterface;
     private final SagaRepository sagaRepository;
     private final SagaContextRepository sagaContextRepository;
     private final SagaContextProductsQuantityRepository sagaContextProductsQuantityRepository;
@@ -72,36 +71,44 @@ public class SagaService {
             
     }
 
-    public Mono<SagaInstance> createAndPublishSaga(Order order) {
-
-        SagaInstance saga = SagaInstance.create(SagaState.ORDER_CREATED);
+    private Mono<SagaInstance> createAndPublishSaga(Order order) {
+        logger.info("Creating new Saga for order with id {}", order.getId());
+        SagaInstance saga = new SagaInstance();        
+        saga.setState(SagaState.ORDER_CREATED);
 
         return sagaRepository.save(saga)
-            .flatMap(savedSaga ->
-                sagaContextRepository.save(
-                    SagaContext.from(order, savedSaga.getSagaId())
-                )
-                .flatMap(context ->
-                    Flux.fromIterable(order.getProductsQuantity().entrySet())
-                        .flatMap(e ->
-                            sagaContextProductsQuantityRepository.save(
-                                SagaContextProductsQuantity.from(context, e)
-                            )
-                        )
-                        .thenReturn(savedSaga)
-                )
-            )
-            .doOnSuccess(savedSaga ->
-                eventPublisher.publish(
-                    new OrderCreated(
-                        savedSaga.getSagaId(),
-                        order.getId(),
-                        order.getName(),
-                        order.getTotalPrice(),
-                        order.getProductsQuantity()
-                    )
-                )
-            );
+            .flatMap(savedSaga -> {
+                SagaContext context = new SagaContext(savedSaga.getSagaId());
+                context.setName(order.getName());
+                context.setOrderId(order.getId());
+                context.setTotalPrice(order.getTotalPrice());        
+                saga.setContext(context);
+                return sagaContextRepository.save(context)
+                    .flatMap(sagaContext -> 
+                        Flux.fromIterable(order.getProductsQuantity().entrySet())
+                        .map(e -> new SagaContextProductsQuantity(
+                                sagaContext.getId(),
+                                e.getKey(),
+                                e.getValue()
+                        ))
+                        .flatMap(sagaContextProductsQuantityRepository::save) 
+                        .map(saved -> saved.toProductQuantityInputDTO())
+                        .collectList()           
+                        .doOnNext(list -> {
+                            eventPublisher.publish(
+                                new OrderCreated(
+                                    savedSaga.getSagaId(),
+                                    order.getId(),
+                                    order.getName(),
+                                    order.getTotalPrice(),
+                                    list
+                                )
+                            );
+                          })
+                        .thenReturn(savedSaga)                    
+                    );                    
+            })
+            .doOnSuccess(saved -> logger.info("Saga created successfuly with sagaId {}",saved.getSagaId()));
     }
 
 
@@ -144,7 +151,7 @@ public class SagaService {
 
 
 
-    public Mono<SagaInstance> onOrderCreated(OrderCreated event) {
+    public Mono<SagaInstance> onOrderCreated(OrderCreated event) {        
         return transitionState(
             event.sagaId(),
             SagaState.ORDER_CREATED,
@@ -154,6 +161,7 @@ public class SagaService {
         );
     }
     public Mono<SagaInstance> onTransactionApproved(TransactionApproved event) {
+        logger.info("Event received of confirmation on transaction from Order with id {} with sagaId {}", event.orderId(), event.sagaId());
         return transitionState(
             event.sagaId(),
             SagaState.TRANSACTION_CONFIRMED,
@@ -165,6 +173,7 @@ public class SagaService {
         );
     }
     public Mono<SagaInstance> onTransactionRejected(TransactionRejected event) {
+        logger.info("Event received of rejection on transaction from Order with id {} with sagaId {}", event.orderId(), event.sagaId());
         return transitionState(
             event.sagaId(),
             SagaState.TRANSACTION_FAILED,
@@ -176,6 +185,7 @@ public class SagaService {
         );
     }
     public Mono<SagaInstance> onStockReserved(StockReserved event) {
+        logger.info("Event received of confirmation on stock reservation from Order with id {} with sagaId {}", event.orderId(), event.sagaId());
         return transitionState(
             event.sagaId(),
             SagaState.STOCK_RESERVED,
@@ -187,6 +197,7 @@ public class SagaService {
         );
     }
     public Mono<SagaInstance> onStockRejected(StockRejected event) {
+        logger.info("Event received of rejection on stock reservation from Order with id {} with sagaId {}", event.orderId(), event.sagaId());
         return transitionState(
             event.sagaId(),
             SagaState.STOCK_FAILED,
@@ -199,6 +210,7 @@ public class SagaService {
         );
     }
     public Mono<SagaInstance> onOrderCompleted(OrderCompleted event) {
+        logger.info("Event received of confirmation on order completion from Order with id {} with sagaId {}", event.orderId(), event.sagaId());
         return transitionState(
             event.sagaId(),
             SagaState.ORDER_COMPLETED,
@@ -208,6 +220,7 @@ public class SagaService {
         );
     }
     public Mono<SagaInstance> onOrderCancelled(OrderCancelled event) {
+        logger.info("Event received of failure on order completion from Order with id {} with sagaId {}", event.orderId(), event.sagaId());
         return transitionState(
             event.sagaId(),
             SagaState.ORDER_COMPENSATED,

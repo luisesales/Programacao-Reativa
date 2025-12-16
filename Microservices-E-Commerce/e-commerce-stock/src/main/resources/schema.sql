@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS product (
     category VARCHAR(255)
 );
 
-CREATE TABLE outbox_event (
+CREATE TABLE IF NOT EXISTS outbox_event (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     aggregate_type VARCHAR(100) NOT NULL,
     event_type VARCHAR(100) NOT NULL,
@@ -21,10 +21,10 @@ CREATE TABLE outbox_event (
     retry_count INT DEFAULT 0
 );
 
-CREATE TABLE outbox_event_context (
+CREATE TABLE IF NOT EXISTS outbox_event_context (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     outbox_event_id UUID NOT NULL REFERENCES outbox_event(id) ON DELETE CASCADE,
     field_name VARCHAR(255) NOT NULL,
     field_value VARCHAR(255) NOT NULL,
-    transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE
+    order_id UUID NOT NULL 
 );

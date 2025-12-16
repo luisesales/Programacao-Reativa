@@ -38,8 +38,7 @@ public class SagaInstance {
 
     public SagaInstance() {            
         this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
-        this.version = 0L;
+        this.updatedAt = Instant.now();        
     }
 
     public UUID getSagaId() { 
