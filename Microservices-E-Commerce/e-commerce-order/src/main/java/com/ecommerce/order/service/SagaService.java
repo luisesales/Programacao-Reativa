@@ -97,7 +97,7 @@ public class SagaService {
                         .map(saved -> saved.toProductQuantityInputDTO())
                         .collectList()           
                         .doOnNext(list -> {
-                            eventPublisher.publish(
+                            eventPublisher.publishTransactionRequested(
                                 new TransactionRequested(
                                     savedSaga.getSagaId(),
                                     order.getId(),

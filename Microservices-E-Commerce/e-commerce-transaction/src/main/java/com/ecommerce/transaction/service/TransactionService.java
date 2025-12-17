@@ -1,5 +1,6 @@
 package com.ecommerce.transaction.service;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 import java.util.UUID;
@@ -133,34 +134,46 @@ public class TransactionService {
                 event.orderId(), event.sagaId());
 
         return transactionRepository.save(
-                new Transaction(
-                        event.name(),                        
-                        event.totalPrice(),
-                        event.orderId()
-                )
-        ).flatMap(saved -> {
-            logger.info("Transaction saved (id {}) for order {}", saved.getId(), saved.getOrderId());
+            new Transaction(
+                event.name(),
+                event.totalPrice(),
+                event.orderId()
+            )
+        )
+        .flatMap(saved -> {
 
             boolean approved = isPaymentApproved(event);
-
             String eventType = approved ? "TransactionApproved" : "TransactionRejected";
 
-            OutboxEvent outbox = new OutboxEvent(                
-                "TRANSACTION",
-                eventType,
-                false,
-                LocalDateTime.now()
-            );
-
-            return outboxRepository.save(outbox)
-                .thenMany(Flux.just(
-                    new OutboxEventContext(outbox.getId(), "sagaId", String.valueOf(event.sagaId()),saved.getId()),
-                    new OutboxEventContext(outbox.getId(), "orderId", String.valueOf(event.orderId()),saved.getId()),
-                    new OutboxEventContext(outbox.getId(), "transactionId", String.valueOf(saved.getId()),saved.getId())
-                ).flatMap(outboxContextRepository::save))
-                .then();
-            
+            return outboxRepository.save(
+                    new OutboxEvent(
+                        "TRANSACTION",
+                        eventType,
+                        false,
+                        LocalDateTime.now()
+                    )
+                )
+                .flatMap(savedOutbox ->
+                    Flux.just(
+                        new OutboxEventContext(savedOutbox.getId(), "sagaId", event.sagaId().toString(), saved.getId()),
+                        new OutboxEventContext(savedOutbox.getId(), "orderId", event.orderId().toString(), saved.getId()),
+                        new OutboxEventContext(savedOutbox.getId(), "transactionId", saved.getId().toString(), saved.getId())
+                    )
+                    .flatMap(outboxContextRepository::save)
+                    .then()
+                );
+        })
+        .doOnSuccess(v ->
+            logger.info(
+                "Transaction created successfully for orderId {} with sagaId {}",
+                event.orderId(), event.sagaId()
+            )
+        )
+        .onErrorResume(e -> {
+            logger.error("Error creating transaction for sagaId {}", event.sagaId(), e);
+            return Mono.error(new SQLException("Internal Server Error", e));
         });
+
     }
 
     public Mono<Void> handleRefund(TransactionRefundRequested event) {

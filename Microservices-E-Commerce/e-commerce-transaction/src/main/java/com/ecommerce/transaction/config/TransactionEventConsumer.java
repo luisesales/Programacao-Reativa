@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.transaction.event.TransactionRefundRequested;
 import com.ecommerce.transaction.event.TransactionRequested;
 import com.ecommerce.transaction.service.TransactionService;
-import com.ecommerce.transaction.event.TransactionRefundRequested;
 
 @Service
 public class TransactionEventConsumer {
@@ -23,13 +23,13 @@ public class TransactionEventConsumer {
     }
 
     @Bean
-    public Consumer<TransactionRequested> onTransactionRequested() {
+    public Consumer<TransactionRequested> transactionRequested() {
         logger.info("Consuming TransactionRequested event");
         return event -> transactionService.handle(event);
     }
 
     @Bean
-    public Consumer<TransactionRefundRequested> onTransactionRefundRequested() {
+    public Consumer<TransactionRefundRequested> transactionRefundRequested() {
         logger.info("Consuming TransactionRefundRequested event");
         return event -> transactionService.handleRefund(event);
     }

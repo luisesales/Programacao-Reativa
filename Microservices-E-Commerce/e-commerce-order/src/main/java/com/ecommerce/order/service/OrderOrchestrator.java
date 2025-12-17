@@ -5,11 +5,9 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.order.component.EventPublisher;
 import com.ecommerce.order.event.DomainEvent;
 import com.ecommerce.order.event.OrderCancelled;
-import com.ecommerce.order.event.OrderCompleted;
 import com.ecommerce.order.event.OrderCreated;
 import com.ecommerce.order.event.StockRejected;
 import com.ecommerce.order.event.StockRequested;
-import com.ecommerce.order.event.StockReserved;
 import com.ecommerce.order.event.TransactionApproved;
 import com.ecommerce.order.event.TransactionRefundRequested;
 import com.ecommerce.order.event.TransactionRejected;
@@ -34,7 +32,7 @@ public class OrderOrchestrator {
         // ETAPA 1 — inicia pagamento 
         case OrderCreated evt -> sagaService.onOrderCreated(evt)
             .then(Mono.fromRunnable(() ->
-                eventPublisher.publish(new TransactionRequested(
+                eventPublisher.publishTransactionRequested(new TransactionRequested(
                     evt.sagaId(), evt.orderId(), evt.name(), evt.totalPrice()
                 ))
             ));
@@ -43,7 +41,7 @@ public class OrderOrchestrator {
         case TransactionApproved evt -> sagaService.onTransactionApproved(evt)
             .then(sagaService.getProductsQuantityById(evt.sagaId()))
             .doOnNext(products ->
-                eventPublisher.publish(
+                eventPublisher.publishStockRequested(
                     new StockRequested(
                         evt.sagaId(),
                         evt.orderId(),
@@ -55,23 +53,23 @@ public class OrderOrchestrator {
 
 
 
-        // ETAPA 3 — pedido concluído 
-        case StockReserved evt -> sagaService.onStockReserved(evt)
-            .then(Mono.fromRunnable(() -> 
-                eventPublisher.publish(new OrderCompleted(evt.sagaId(), evt.orderId()))
-            ));
+        // // ETAPA 3 — pedido concluído 
+        // case StockReserved evt -> sagaService.onStockReserved(evt)
+        //     .then(Mono.fromRunnable(() -> 
+        //         eventPublisher.publishO(new OrderCompleted(evt.sagaId(), evt.orderId()))
+        //     ));
 
         // COMPENSAÇÃO — estorno de pagamento
         case TransactionRejected evt -> sagaService.onTransactionRejected(evt)
             .then(Mono.fromRunnable(() ->
-                eventPublisher.publish(new OrderCancelled(evt.sagaId(), evt.orderId(), evt.reason()))
+                eventPublisher.publishOrderCancelled(new OrderCancelled(evt.sagaId(), evt.orderId(), evt.reason()))
             ));
 
         // COMPENSAÇÃO — devolução de estoque
         case StockRejected evt -> sagaService.onStockRejected(evt)
             .then(sagaService.findContextBySagaId(evt.sagaId()))
             .doOnNext(context -> 
-                eventPublisher.publish(
+                eventPublisher.publishTransactionRefundRequested(
                     new TransactionRefundRequested(
                         evt.sagaId(),context.getOrderId(),context.getName(),context.getTotalPrice()
                     )
