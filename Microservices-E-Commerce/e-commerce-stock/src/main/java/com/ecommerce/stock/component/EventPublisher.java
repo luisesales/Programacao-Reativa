@@ -2,7 +2,10 @@ package com.ecommerce.stock.component;
 
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
 
 import com.ecommerce.stock.event.DomainEvent;
 
@@ -13,14 +16,23 @@ import reactor.core.publisher.Mono;
 @Component
 public class EventPublisher {
 
-    private final Sinks.Many<DomainEvent> sink = Sinks.many().unicast().onBackpressureBuffer();
+    private static final Logger logger =
+        LoggerFactory.getLogger(EventPublisher.class);
 
-    public Mono<Void> publish(DomainEvent event) {
-        sink.tryEmitNext(event);
-        return Mono.empty();
+    private final Sinks.Many<DomainEvent> sink =
+        Sinks.many().multicast().onBackpressureBuffer();
+
+    public void publish(DomainEvent event) {
+        Sinks.EmitResult result = sink.tryEmitNext(event);
+        logger.info(
+            "Publishing DomainEvent sagaId={}, result={}",
+            event.sagaId(),
+            result
+        );
     }
 
-    public Supplier<Flux<DomainEvent>> emitter() {
+    @Bean
+    public Supplier<Flux<DomainEvent>> eventEmitter() {
         return sink::asFlux;
     }
 }

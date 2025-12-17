@@ -2,13 +2,12 @@ package com.ecommerce.transaction.component;
 
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
 
 import com.ecommerce.transaction.event.DomainEvent;
-import com.ecommerce.transaction.event.TransactionApproved;
-import com.ecommerce.transaction.event.TransactionRefundApproved;
-import com.ecommerce.transaction.event.TransactionRefundRejected;
-import com.ecommerce.transaction.event.TransactionRejected;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,24 +16,23 @@ import reactor.core.publisher.Sinks;
 @Component
 public class EventPublisher {
 
-    private final Sinks.Many<DomainEvent> sink = Sinks.many().unicast().onBackpressureBuffer();
+    private static final Logger logger =
+        LoggerFactory.getLogger(EventPublisher.class);
 
-    public Mono<Void> publish(DomainEvent event) {
-        sink.tryEmitNext(event);
-        return Mono.empty();
+    private final Sinks.Many<DomainEvent> sink =
+        Sinks.many().multicast().onBackpressureBuffer();
+
+    public void publish(DomainEvent event) {
+        Sinks.EmitResult result = sink.tryEmitNext(event);
+        logger.info(
+            "Publishing DomainEvent sagaId={}, result={}",
+            event.sagaId(),
+            result
+        );
     }
 
-    public Supplier<Flux<DomainEvent>> emitter() {
+    @Bean
+    public Supplier<Flux<DomainEvent>> eventEmitter() {
         return sink::asFlux;
     }
-
-    private Class<? extends DomainEvent> resolveEventClass(String type) {
-    return switch (type) {
-        case "TransactionApproved" -> TransactionApproved.class;
-        case "TransactionRejected" -> TransactionRejected.class;
-        case "TransactionRefundApproved" -> TransactionRefundApproved.class;
-        case "TransactionRefundRejected" -> TransactionRefundRejected.class;
-        default -> throw new IllegalArgumentException("Unknown event type: " + type);
-    };
-}
 }

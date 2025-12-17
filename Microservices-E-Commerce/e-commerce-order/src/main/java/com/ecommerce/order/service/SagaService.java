@@ -18,8 +18,10 @@ import com.ecommerce.order.event.OrderCompleted;
 import com.ecommerce.order.event.OrderCreated;
 import com.ecommerce.order.event.StockRejected;
 import com.ecommerce.order.event.StockReserved;
+import com.ecommerce.order.event.StockRequested;
 import com.ecommerce.order.event.TransactionApproved;
 import com.ecommerce.order.event.TransactionRejected;
+import com.ecommerce.order.event.TransactionRequested;
 import com.ecommerce.order.exchange.AiHttpInterface;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.dto.ProductQuantityInputDTO;
@@ -96,12 +98,11 @@ public class SagaService {
                         .collectList()           
                         .doOnNext(list -> {
                             eventPublisher.publish(
-                                new OrderCreated(
+                                new TransactionRequested(
                                     savedSaga.getSagaId(),
                                     order.getId(),
                                     order.getName(),
-                                    order.getTotalPrice(),
-                                    list
+                                    order.getTotalPrice()
                                 )
                             );
                           })
@@ -374,7 +375,5 @@ public class SagaService {
                     .filter(e -> e instanceof OptimisticLockingFailureException)
             );
     }
-
-
 
 }
