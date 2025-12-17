@@ -173,7 +173,6 @@ public class TransactionService {
             logger.error("Error creating transaction for sagaId {}", event.sagaId(), e);
             return Mono.error(new SQLException("Internal Server Error", e));
         });
-
     }
 
     public Mono<Void> handleRefund(TransactionRefundRequested event) {
