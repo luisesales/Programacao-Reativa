@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+
+  mcp-client-1:
+    container_name: e-commerce-mcp-client-1
+    build: .
+    ports:
+      - "8092:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-mcp-client
+      SPRING_PROFILES_ACTIVE: mcp-client-1
+
+  mcp-client-2:
+    container_name: e-commerce-mcp-client-2
+    build: .
+    ports:
+      - "8093:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-mcp-client
+      SPRING_PROFILES_ACTIVE: mcp-client-2

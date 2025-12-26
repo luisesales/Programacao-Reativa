@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+
+  transaction-1:
+    container_name: e-commerce-transaction-1
+    build: .
+    ports:
+      - "8094:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-transaction
+      SPRING_PROFILES_ACTIVE: transaction-server-reactive-1
+
+  transaction-2:
+    container_name: e-commerce-transaction-2
+    build: .
+    ports:
+      - "8095:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-transaction
+      SPRING_PROFILES_ACTIVE: transaction-server-reactive-2

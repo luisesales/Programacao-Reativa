@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+
+  discovery-service-1:
+    container_name: e-commerce-discovery-service-1
+    build: .
+    ports:
+      - "8761:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-discovery-service
+      SPRING_PROFILES_ACTIVE: discovery-server-1
+
+  discovery-service-2:
+    container_name: e-commerce-discovery-service-2
+    build: .
+    ports:
+      - "8762:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-discovery-service
+      SPRING_PROFILES_ACTIVE: discovery-server-2
+
+  discovery-service-3:
+      container_name: e-commerce-discovery-service-3
+      build: .
+      ports:
+        - "8763:8080"
+      volumes:
+        - .:/app
+        - ~/.m2:/root/.m2
+      environment:
+        SPRING_APPLICATION_NAME: e-commerce-discovery-service
+        SPRING_PROFILES_ACTIVE: discovery-server-3

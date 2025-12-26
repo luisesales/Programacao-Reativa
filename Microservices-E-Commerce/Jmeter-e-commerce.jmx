@@ -5,14 +5,12 @@
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
         <collectionProp name="Arguments.arguments"/>
       </elementProp>
-      <boolProp name="TestPlan.functional_mode">false</boolProp>
-      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
     </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Microservices Ecommerce Reactive">
         <intProp name="ThreadGroup.num_threads">400</intProp>
         <intProp name="ThreadGroup.ramp_time">60</intProp>
-        <longProp name="ThreadGroup.duration">60</longProp>
+        <longProp name="ThreadGroup.duration">1</longProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
@@ -59,7 +57,7 @@
           <stringProp name="filename"></stringProp>
         </ResultCollector>
         <hashTree/>
-        <kg.apc.jmeter.vizualizers.CompositeResultCollector guiclass="kg.apc.jmeter.vizualizers.CompositeGraphGui" testclass="kg.apc.jmeter.vizualizers.CompositeResultCollector" testname="jp@gc - Composite Graph" enabled="true">
+        <kg.apc.jmeter.vizualizers.CompositeResultCollector guiclass="kg.apc.jmeter.vizualizers.CompositeGraphGui" testclass="kg.apc.jmeter.vizualizers.CompositeResultCollector" testname="jp@gc - Composite Graph">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -108,7 +106,7 @@
           </collectionProp>
         </kg.apc.jmeter.vizualizers.CompositeResultCollector>
         <hashTree/>
-        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ThreadsStateOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Active Threads Over Time" enabled="true">
+        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ThreadsStateOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Active Threads Over Time">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -153,7 +151,7 @@
           <boolProp name="exclude_checkbox_state">false</boolProp>
         </kg.apc.jmeter.vizualizers.CorrectedResultCollector>
         <hashTree/>
-        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.TransactionsPerSecondGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Transactions per Second" enabled="true">
+        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.TransactionsPerSecondGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Transactions per Second">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -198,7 +196,7 @@
           <boolProp name="exclude_checkbox_state">false</boolProp>
         </kg.apc.jmeter.vizualizers.CorrectedResultCollector>
         <hashTree/>
-        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ResponseTimesOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Response Times Over Time" enabled="true">
+        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.ResponseTimesOverTimeGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Response Times Over Time">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -243,7 +241,7 @@
           <boolProp name="exclude_checkbox_state">false</boolProp>
         </kg.apc.jmeter.vizualizers.CorrectedResultCollector>
         <hashTree/>
-        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
@@ -291,7 +289,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetAllProducts" enabled="false">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GetAllProducts">
           <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-stock/products</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -451,11 +449,15 @@
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
   &quot;name&quot;: &quot;Notebook Vision R15&quot;,&#xd;
-  &quot;productsQuantity&quot;: {&#xd;
-  	&quot;583b3496-6c48-4375-871c-eb7088182470&quot; : 1&#xd;
-  },&#xd;
+  &quot;productsQuantity&quot;: [&#xd;
+  	{&#xd;
+  		&quot;productId&quot;: &quot;583b3496-6c48-4375-871c-eb7088182470&quot;,&#xd;
+	  	&quot;quantity&quot;: 1&#xd;
+  	}&#xd;
+  ],&#xd;
   &quot;totalPrice&quot;: 3500.00&#xd;
 }&#xd;
+&#xd;
 </stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -477,7 +479,7 @@
           </HeaderManager>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateTransaction">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CreateTransaction" enabled="false">
           <stringProp name="HTTPSampler.path">http://localhost:8085/e-commerce-transaction/transactions</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>

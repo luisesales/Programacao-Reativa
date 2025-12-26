@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+
+  stock-1:
+    container_name: e-commerce-stock-1
+    build: .
+    ports:
+      - "8086:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-stock
+      SPRING_PROFILES_ACTIVE: stock-server-reactive-1
+
+  stock-2:
+    container_name: e-commerce-stock-2
+    build: .
+    ports:
+      - "8087:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-stock
+      SPRING_PROFILES_ACTIVE: stock-server-reactive-2

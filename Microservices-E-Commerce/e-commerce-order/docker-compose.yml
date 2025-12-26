@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+
+  order-1:
+    container_name: e-commerce-order-1
+    build: .
+    ports:
+      - "8088:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-order
+      SPRING_PROFILES_ACTIVE: order-server-reactive-1
+
+  order-2:
+    container_name: e-commerce-order-2
+    build: .
+    ports:
+      - "8089:8080"
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-order
+      SPRING_PROFILES_ACTIVE: order-server-reactive-2
