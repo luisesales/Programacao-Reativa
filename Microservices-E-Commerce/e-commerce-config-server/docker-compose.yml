@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  spring-app:
+    container_name: e-commerce-config-server
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: e-commerce-config-server
+      SPRING_PROFILES_ACTIVE: dev
+    command: mvn spring-boot:run
